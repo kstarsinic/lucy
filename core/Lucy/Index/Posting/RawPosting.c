@@ -51,6 +51,27 @@ RawPost_destroy(RawPosting *self) {
     THROW(ERR, "Illegal attempt to destroy RawPosting object");
 }
 
+int32_t
+RawPost_compare_to(RawPosting *self, Obj *other) {
+    RawPosting *twin = (RawPosting*)other;
+    const size_t my_len   = self->content_len;
+    const size_t twin_len = twin->content_len;
+    const size_t len      = my_len < twin_len ? my_len : twin_len;
+    int32_t comparison = memcmp(self->blob, twin->blob, len);
+
+    if (comparison == 0) {
+        // If a is a substring of b, it's less than b, so return a neg num.
+        comparison = (int32_t)((int64_t)my_len - (int64_t)twin_len);
+
+        // Break ties by doc id.
+        if (comparison == 0) {
+            comparison = self->doc_id - twin->doc_id;
+        }
+    }
+
+    return comparison;
+}
+
 uint32_t
 RawPost_get_refcount(RawPosting* self) {
     UNUSED_VAR(self);
