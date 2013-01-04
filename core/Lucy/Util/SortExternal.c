@@ -39,11 +39,7 @@ static uint32_t
 S_find_slice_size(SortExternal *self, uint8_t *endpost);
 
 SortExternal*
-SortEx_init(SortExternal *self, size_t width) {
-    // Assign.
-    self->width        = width;
-
-    // Init.
+SortEx_init(SortExternal *self) {
     self->mem_thresh   = UINT32_MAX;
     self->cache        = NULL;
     self->cache_cap    = 0;
@@ -82,13 +78,12 @@ SortEx_clear_cache(SortExternal *self) {
 
 void
 SortEx_feed(SortExternal *self, void *data) {
-    const size_t width = self->width;
     if (self->cache_max == self->cache_cap) {
-        size_t amount = Memory_oversize(self->cache_max + 1, width);
+        size_t amount = Memory_oversize(self->cache_max + 1, sizeof(Obj*));
         SortEx_Grow_Cache(self, amount);
     }
-    uint8_t *target = self->cache + self->cache_max * width;
-    memcpy(target, data, width);
+    uint8_t *target = self->cache + self->cache_max * sizeof(Obj*);
+    memcpy(target, data, sizeof(Obj*));
     self->cache_max++;
 }
 
@@ -99,7 +94,7 @@ SI_peek(SortExternal *self) {
     }
 
     if (self->cache_max > 0) {
-        return self->cache + self->cache_tick * self->width;
+        return self->cache + self->cache_tick * sizeof(Obj*);
     }
     else {
         return NULL;
@@ -131,10 +126,10 @@ SortEx_sort_cache(SortExternal *self) {
             self->scratch_cap = self->cache_cap;
             self->scratch = (uint8_t*)REALLOCATE(
                                 self->scratch,
-                                self->scratch_cap * self->width);
+                                self->scratch_cap * sizeof(Obj*));
         }
         Sort_mergesort(self->cache, self->scratch, self->cache_max,
-                       self->width, compare, self);
+                       sizeof(Obj*), compare, self);
     }
 }
 
@@ -183,7 +178,6 @@ S_refill_cache(SortExternal *self) {
 static uint8_t*
 S_find_endpost(SortExternal *self) {
     uint8_t *endpost = NULL;
-    const size_t width = self->width;
 
     for (uint32_t i = 0, max = VA_Get_Size(self->runs); i < max; i++) {
         // Get a run and retrieve the last item in its cache.
@@ -196,7 +190,7 @@ S_find_endpost(SortExternal *self) {
         else {
             // Cache item with the highest sort value currently held in memory
             // by the run.
-            uint8_t *candidate = run->cache + tick * width;
+            uint8_t *candidate = run->cache + tick * sizeof(Obj*);
 
             // If it's the first run, item is automatically the new endpost.
             if (i == 0) {
@@ -214,7 +208,6 @@ S_find_endpost(SortExternal *self) {
 
 static void
 S_absorb_slices(SortExternal *self, uint8_t *endpost) {
-    size_t      width        = self->width;
     uint32_t    num_runs     = VA_Get_Size(self->runs);
     uint8_t   **slice_starts = self->slice_starts;
     uint32_t   *slice_sizes  = self->slice_sizes;
@@ -233,12 +226,12 @@ S_absorb_slices(SortExternal *self, uint8_t *endpost) {
             // Move slice content from run cache to main cache.
             if (self->cache_max + slice_size > self->cache_cap) {
                 size_t cap = Memory_oversize(self->cache_max + slice_size,
-                                             width);
+                                             sizeof(Obj*));
                 SortEx_Grow_Cache(self, cap);
             }
-            memcpy(self->cache + self->cache_max * width,
-                   run->cache + run->cache_tick * width,
-                   slice_size * width);
+            memcpy(self->cache + self->cache_max * sizeof(Obj*),
+                   run->cache + run->cache_tick * sizeof(Obj*),
+                   slice_size * sizeof(Obj*));
             run->cache_tick += slice_size;
             self->cache_max += slice_size;
 
@@ -250,7 +243,7 @@ S_absorb_slices(SortExternal *self, uint8_t *endpost) {
     // Transform slice starts from ticks to pointers.
     uint32_t total = 0;
     for (uint32_t i = 0; i < self->num_slices; i++) {
-        slice_starts[i] = self->cache + total * width;
+        slice_starts[i] = self->cache + total * sizeof(Obj*);
         total += slice_sizes[i];
     }
 
@@ -259,7 +252,7 @@ S_absorb_slices(SortExternal *self, uint8_t *endpost) {
     if (self->scratch_cap < self->cache_cap) {
         self->scratch_cap = self->cache_cap;
         self->scratch = (uint8_t*)REALLOCATE(
-                            self->scratch, self->scratch_cap * width);
+                            self->scratch, self->scratch_cap * sizeof(Obj*));
     }
 
     // Exploit previous sorting, rather than sort cache naively.
@@ -274,10 +267,10 @@ S_absorb_slices(SortExternal *self, uint8_t *endpost) {
                 const uint32_t merged_size = slice_sizes[i] + slice_sizes[i + 1];
                 Sort_merge(slice_starts[i], slice_sizes[i],
                            slice_starts[i + 1], slice_sizes[i + 1], self->scratch,
-                           self->width, compare, self);
+                           sizeof(Obj*), compare, self);
                 slice_sizes[j]  = merged_size;
                 slice_starts[j] = slice_starts[i];
-                memcpy(slice_starts[j], self->scratch, merged_size * width);
+                memcpy(slice_starts[j], self->scratch, merged_size * sizeof(Obj*));
                 i += 2;
                 j += 1;
             }
@@ -298,7 +291,7 @@ S_absorb_slices(SortExternal *self, uint8_t *endpost) {
 void
 SortEx_grow_cache(SortExternal *self, uint32_t size) {
     if (size > self->cache_cap) {
-        self->cache = (uint8_t*)REALLOCATE(self->cache, size * self->width);
+        self->cache = (uint8_t*)REALLOCATE(self->cache, size * sizeof(Obj*));
         self->cache_cap = size;
     }
 }
@@ -308,14 +301,13 @@ S_find_slice_size(SortExternal *self, uint8_t *endpost) {
     int32_t          lo      = self->cache_tick - 1;
     int32_t          hi      = self->cache_max;
     uint8_t *const   cache   = self->cache;
-    const size_t     width   = self->width;
     SortEx_Compare_t compare
         = METHOD_PTR(SortEx_Get_VTable(self), Lucy_SortEx_Compare);
 
     // Binary search.
     while (hi - lo > 1) {
         const int32_t mid   = lo + ((hi - lo) / 2);
-        const int32_t delta = compare(self, cache + mid * width, endpost);
+        const int32_t delta = compare(self, cache + mid * sizeof(Obj*), endpost);
         if (delta > 0) { hi = mid; }
         else           { lo = mid; }
     }

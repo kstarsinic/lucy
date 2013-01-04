@@ -75,7 +75,7 @@ PostPool_init(PostingPool *self, Schema *schema, Snapshot *snapshot,
               OutStream *lex_temp_out, OutStream *post_temp_out,
               OutStream *skip_out) {
     // Init.
-    SortEx_init((SortExternal*)self, sizeof(Obj*));
+    SortEx_init((SortExternal*)self);
     self->doc_base         = 0;
     self->last_doc_id      = 0;
     self->doc_map          = NULL;
