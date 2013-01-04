@@ -188,7 +188,7 @@ SortFieldWriter_add(SortFieldWriter *self, int32_t doc_id, Obj *value) {
     // Uniq-ify the value, and record it for this document.
     Obj *copy = S_find_unique_value(self->uniq_vals, value);
     SFWriterElem *elem = S_SFWriterElem_create(self->mem_pool, copy, doc_id);
-    SortFieldWriter_Feed(self, &elem);
+    SortFieldWriter_Feed(self, (Obj*)elem);
     self->count++;
 }
 

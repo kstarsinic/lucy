@@ -130,7 +130,7 @@ MatchPost_add_inversion_to_pool(MatchPosting *self, PostingPool *post_pool,
         RawPosting *raw_posting
             = RawPost_new(MemPool_Grab(mem_pool, raw_post_bytes), doc_id,
                           freq, token->text, token->len);
-        PostPool_Feed(post_pool, &raw_posting);
+        PostPool_Feed(post_pool, (Obj*)raw_posting);
     }
 }
 

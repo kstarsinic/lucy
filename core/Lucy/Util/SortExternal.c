@@ -77,13 +77,13 @@ SortEx_clear_cache(SortExternal *self) {
 }
 
 void
-SortEx_feed(SortExternal *self, void *data) {
+SortEx_feed(SortExternal *self, Obj *item) {
     if (self->cache_max == self->cache_cap) {
         size_t amount = Memory_oversize(self->cache_max + 1, sizeof(Obj*));
         SortEx_Grow_Cache(self, amount);
     }
-    uint8_t *target = self->cache + self->cache_max * sizeof(Obj*);
-    memcpy(target, data, sizeof(Obj*));
+    Obj **elems = (Obj**)self->cache;
+    elems[self->cache_max] = item;
     self->cache_max++;
 }
 

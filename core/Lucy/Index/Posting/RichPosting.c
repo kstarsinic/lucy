@@ -140,7 +140,7 @@ RichPost_add_inversion_to_pool(RichPosting *self, PostingPool *post_pool,
         raw_posting->aux_len = dest - start;
         raw_post_bytes = dest - (char*)raw_posting;
         MemPool_Resize(mem_pool, raw_posting, raw_post_bytes);
-        PostPool_Feed(post_pool, &raw_posting);
+        PostPool_Feed(post_pool, (Obj*)raw_posting);
     }
 }
 

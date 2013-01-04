@@ -59,11 +59,13 @@ BBSortEx_clear_cache(BBSortEx *self) {
 }
 
 void
-BBSortEx_feed(BBSortEx *self, void *data) {
-    SortEx_feed((SortExternal*)self, data);
+BBSortEx_feed(BBSortEx *self, Obj *item) {
+    BBSortEx_Feed_t super_feed
+        = SUPER_METHOD_PTR(BBSORTEX, Lucy_BBSortEx_Feed);
+    super_feed(self, item);
 
     // Flush() if necessary.
-    ByteBuf *bytebuf = (ByteBuf*)CERTIFY(*(ByteBuf**)data, BYTEBUF);
+    ByteBuf *bytebuf = (ByteBuf*)CERTIFY(item, BYTEBUF);
     self->mem_consumed += BB_Get_Size(bytebuf);
     if (self->mem_consumed >= self->mem_thresh) {
         BBSortEx_Flush(self);
