@@ -15,6 +15,7 @@
  */
 
 #define C_LUCY_SORTFIELDWRITER
+#define C_LUCY_SFWRITERELEM
 #include "Lucy/Util/ToolSet.h"
 #include <math.h>
 
@@ -49,11 +50,11 @@ static int32_t
 S_write_files(SortFieldWriter *self, OutStream *ord_out, OutStream *ix_out,
               OutStream *dat_out);
 
-typedef struct lucy_SFWriterElem {
-    Obj *value;
-    int32_t doc_id;
-} lucy_SFWriterElem;
-#define SFWriterElem lucy_SFWriterElem
+// Create an element for the sort pool.  Both the `value` and the object
+// allocation itself will come from the MemoryPool, so the the element will be
+// deallocated via MemPool_Release_All().
+static SFWriterElem*
+S_SFWriterElem_create(MemoryPool *mem_pool, Obj *value, int32_t doc_id);
 
 SortFieldWriter*
 SortFieldWriter_new(Schema *schema, Snapshot *snapshot, Segment *segment,
@@ -185,10 +186,8 @@ S_find_unique_value(Hash *uniq_vals, Obj *val) {
 void
 SortFieldWriter_add(SortFieldWriter *self, int32_t doc_id, Obj *value) {
     // Uniq-ify the value, and record it for this document.
-    SFWriterElem *elem
-        = (SFWriterElem*)MemPool_Grab(self->mem_pool, sizeof(SFWriterElem));
-    elem->value = S_find_unique_value(self->uniq_vals, value);
-    elem->doc_id = doc_id;
+    Obj *copy = S_find_unique_value(self->uniq_vals, value);
+    SFWriterElem *elem = S_SFWriterElem_create(self->mem_pool, copy, doc_id);
     SortFieldWriter_Feed(self, &elem);
     self->count++;
 }
@@ -715,4 +714,38 @@ S_flip_run(SortFieldWriter *run, size_t sub_thresh, InStream *ord_in,
     DECREF(dat_in_dupe);
 }
 
+/***************************************************************************/
+
+static SFWriterElem*
+S_SFWriterElem_create(MemoryPool *mem_pool, Obj *value, int32_t doc_id) {
+    size_t size = VTable_Get_Obj_Alloc_Size(SFWRITERELEM);
+    SFWriterElem *self = (SFWriterElem*)MemPool_Grab(mem_pool, size);
+    VTable_Init_Obj(SFWRITERELEM, (Obj*)self);
+    self->value = value;
+    self->doc_id = doc_id;
+    return self;
+}
+
+void
+SFWriterElem_destroy(SFWriterElem *self) {
+    UNUSED_VAR(self);
+    THROW(ERR, "Illegal attempt to destroy SFWriterElem object");
+}
+
+uint32_t
+SFWriterElem_get_refcount(SFWriterElem* self) {
+    UNUSED_VAR(self);
+    return 1;
+}
+
+SFWriterElem*
+SFWriterElem_inc_refcount(SFWriterElem* self) {
+    return self;
+}
+
+uint32_t
+SFWriterElem_dec_refcount(SFWriterElem* self) {
+    UNUSED_VAR(self);
+    return 1;
+}
 
