@@ -535,8 +535,7 @@ S_write_files(SortFieldWriter *self, OutStream *ord_out, OutStream *ix_out,
 
     // Grab the first item and record its ord.  Add a dummy ord for invalid
     // doc id 0.
-    SFWriterElem **elem_ptr = (SFWriterElem**)SortFieldWriter_Fetch(self);
-    SFWriterElem *elem = *elem_ptr;
+    SFWriterElem *elem = (SFWriterElem*)SortFieldWriter_Fetch(self);
     ords[elem->doc_id] = ord;
     ords[0] = 0;
 
@@ -544,8 +543,7 @@ S_write_files(SortFieldWriter *self, OutStream *ord_out, OutStream *ix_out,
     Obj *val = Obj_Clone(elem->value);
     Obj *last_val_address = elem->value;
     S_write_val(elem->value, prim_id, ix_out, dat_out, dat_start);
-    while (NULL != (elem_ptr = (SFWriterElem**)SortFieldWriter_Fetch(self))) {
-        elem = *elem_ptr;
+    while (NULL != (elem = (SFWriterElem*)SortFieldWriter_Fetch(self))) {
         if (elem->value != last_val_address) {
             int32_t comparison
                 = FType_Compare_Values(self->type, elem->value, val);

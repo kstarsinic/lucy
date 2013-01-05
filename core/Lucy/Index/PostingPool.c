@@ -356,9 +356,8 @@ S_write_terms_and_postings(PostingPool *self, PostingWriter *post_writer,
         = Arch_Skip_Interval(Schema_Get_Architecture(self->schema));
 
     // Prime heldover variables.
-    RawPosting *posting = (RawPosting*)CERTIFY(
-                              (*(RawPosting**)PostPool_Fetch(self)),
-                              RAWPOSTING);
+    RawPosting *posting
+        = (RawPosting*)CERTIFY(PostPool_Fetch(self), RAWPOSTING);
     CB_Mimic_Str(last_term_text, posting->blob, posting->content_len);
     char *last_text_buf = (char*)CB_Get_Ptr8(last_term_text);
     uint32_t last_text_size = CB_Get_Size(last_term_text);
@@ -443,11 +442,7 @@ S_write_terms_and_postings(PostingPool *self, PostingWriter *post_writer,
 
         // Retrieve the next posting from the sort pool.
         // DECREF(posting);  // No!!  DON'T destroy!!!
-
-        void *address = PostPool_Fetch(self);
-        posting = address
-                  ? *(RawPosting**)address
-                  : NULL;
+        posting = (RawPosting*)PostPool_Fetch(self);
     }
 
     // Clean up.

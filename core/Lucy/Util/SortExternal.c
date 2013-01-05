@@ -87,28 +87,29 @@ SortEx_feed(SortExternal *self, Obj *item) {
     self->cache_max++;
 }
 
-static INLINE void*
+static INLINE Obj*
 SI_peek(SortExternal *self) {
     if (self->cache_tick >= self->cache_max) {
         S_refill_cache(self);
     }
 
     if (self->cache_max > 0) {
-        return self->cache + self->cache_tick * sizeof(Obj*);
+        Obj **elems = (Obj**)self->cache;
+        return elems[self->cache_tick];
     }
     else {
         return NULL;
     }
 }
 
-void*
+Obj*
 SortEx_fetch(SortExternal *self) {
-    void *address = SI_peek(self);
+    Obj *item = SI_peek(self);
     self->cache_tick++;
-    return address;
+    return item;
 }
 
-void*
+Obj*
 SortEx_peek(SortExternal *self) {
     return SI_peek(self);
 }

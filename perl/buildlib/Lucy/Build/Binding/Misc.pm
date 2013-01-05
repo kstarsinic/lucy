@@ -369,53 +369,10 @@ sub bind_testschema {
 }
 
 sub bind_bbsortex {
-    my @hand_rolled = qw(
-        Fetch
-        Peek
-    );
-    my $xs_code = <<'END_XS_CODE';
-MODULE = Lucy    PACKAGE = Lucy::Test::Util::BBSortEx
-
-SV*
-fetch(self)
-    lucy_BBSortEx *self;
-CODE:
-{
-    void *address = Lucy_BBSortEx_Fetch(self);
-    if (address) {
-        RETVAL = XSBind_cfish_to_perl(*(lucy_Obj**)address);
-        CFISH_DECREF(*(lucy_Obj**)address);
-    }
-    else {
-        RETVAL = newSV(0);
-    }
-}
-OUTPUT: RETVAL
-
-SV*
-peek(self)
-    lucy_BBSortEx *self;
-CODE:
-{
-    void *address = Lucy_BBSortEx_Peek(self);
-    if (address) {
-        RETVAL = XSBind_cfish_to_perl(*(lucy_Obj**)address);
-    }
-    else {
-        RETVAL = newSV(0);
-    }
-}
-OUTPUT: RETVAL
-
-END_XS_CODE
-
     my $binding = Clownfish::CFC::Binding::Perl::Class->new(
         parcel     => "Lucy",
         class_name => "Lucy::Test::Util::BBSortEx",
     );
-    $binding->exclude_method($_) for @hand_rolled;
-    $binding->append_xs($xs_code);
-
     Clownfish::CFC::Binding::Perl::Class->register($binding);
 }
 
