@@ -125,7 +125,7 @@ SortEx_sort_cache(SortExternal *self) {
             = (Lucy_Sort_Compare_t)METHOD_PTR(vtable, Lucy_SortEx_Compare);
         if (self->scratch_cap < self->cache_cap) {
             self->scratch_cap = self->cache_cap;
-            self->scratch = (uint8_t*)REALLOCATE(
+            self->scratch = (Obj**)REALLOCATE(
                                 self->scratch,
                                 self->scratch_cap * sizeof(Obj*));
         }
@@ -147,9 +147,9 @@ SortEx_add_run(SortExternal *self, SortExternal *run) {
     self->slice_sizes = (uint32_t*)REALLOCATE(
                             self->slice_sizes,
                             num_runs * sizeof(uint32_t));
-    self->slice_starts = (uint8_t**)REALLOCATE(
+    self->slice_starts = (Obj**)REALLOCATE(
                              self->slice_starts,
-                             num_runs * sizeof(uint8_t*));
+                             num_runs * sizeof(Obj*));
 }
 
 static void
@@ -210,7 +210,7 @@ S_find_endpost(SortExternal *self) {
 static void
 S_absorb_slices(SortExternal *self, uint8_t *endpost) {
     uint32_t    num_runs     = VA_Get_Size(self->runs);
-    uint8_t   **slice_starts = self->slice_starts;
+    Obj       **slice_starts = self->slice_starts;
     uint32_t   *slice_sizes  = self->slice_sizes;
     VTable     *vtable       = SortEx_Get_VTable(self);
     Lucy_Sort_Compare_t compare
@@ -244,7 +244,7 @@ S_absorb_slices(SortExternal *self, uint8_t *endpost) {
     // Transform slice starts from ticks to pointers.
     uint32_t total = 0;
     for (uint32_t i = 0; i < self->num_slices; i++) {
-        slice_starts[i] = self->cache + total * sizeof(Obj*);
+        slice_starts[i] = (Obj*)(self->cache + total * sizeof(Obj*));
         total += slice_sizes[i];
     }
 
@@ -252,7 +252,7 @@ S_absorb_slices(SortExternal *self, uint8_t *endpost) {
     // but exploit the fact that each slice is already sorted.
     if (self->scratch_cap < self->cache_cap) {
         self->scratch_cap = self->cache_cap;
-        self->scratch = (uint8_t*)REALLOCATE(
+        self->scratch = (Obj**)REALLOCATE(
                             self->scratch, self->scratch_cap * sizeof(Obj*));
     }
 
