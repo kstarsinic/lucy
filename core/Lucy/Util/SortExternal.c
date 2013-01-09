@@ -82,8 +82,7 @@ SortEx_feed(SortExternal *self, Obj *item) {
         size_t amount = Memory_oversize(self->cache_max + 1, sizeof(Obj*));
         SortEx_Grow_Cache(self, amount);
     }
-    Obj **elems = (Obj**)self->cache;
-    elems[self->cache_max] = item;
+    self->cache[self->cache_max] = item;
     self->cache_max++;
 }
 
@@ -94,8 +93,7 @@ SI_peek(SortExternal *self) {
     }
 
     if (self->cache_max > 0) {
-        Obj **elems = (Obj**)self->cache;
-        return elems[self->cache_tick];
+        return self->cache[self->cache_tick];
     }
     else {
         return NULL;
@@ -147,9 +145,9 @@ SortEx_add_run(SortExternal *self, SortExternal *run) {
     self->slice_sizes = (uint32_t*)REALLOCATE(
                             self->slice_sizes,
                             num_runs * sizeof(uint32_t));
-    self->slice_starts = (Obj**)REALLOCATE(
+    self->slice_starts = (Obj***)REALLOCATE(
                              self->slice_starts,
-                             num_runs * sizeof(Obj*));
+                             num_runs * sizeof(Obj**));
 }
 
 static void
@@ -191,7 +189,7 @@ S_find_endpost(SortExternal *self) {
         else {
             // Cache item with the highest sort value currently held in memory
             // by the run.
-            Obj **candidate = (Obj**)run->cache + tick;
+            Obj **candidate = run->cache + tick;
 
             // If it's the first run, item is automatically the new endpost.
             if (i == 0) {
@@ -210,7 +208,7 @@ S_find_endpost(SortExternal *self) {
 static void
 S_absorb_slices(SortExternal *self, Obj **endpost) {
     uint32_t    num_runs     = VA_Get_Size(self->runs);
-    Obj       **slice_starts = self->slice_starts;
+    Obj      ***slice_starts = self->slice_starts;
     uint32_t   *slice_sizes  = self->slice_sizes;
     VTable     *vtable       = SortEx_Get_VTable(self);
     Lucy_Sort_Compare_t compare
@@ -230,8 +228,8 @@ S_absorb_slices(SortExternal *self, Obj **endpost) {
                                              sizeof(Obj*));
                 SortEx_Grow_Cache(self, cap);
             }
-            memcpy(self->cache + self->cache_max * sizeof(Obj*),
-                   run->cache + run->cache_tick * sizeof(Obj*),
+            memcpy(self->cache + self->cache_max,
+                   run->cache + run->cache_tick,
                    slice_size * sizeof(Obj*));
             run->cache_tick += slice_size;
             self->cache_max += slice_size;
@@ -244,7 +242,7 @@ S_absorb_slices(SortExternal *self, Obj **endpost) {
     // Transform slice starts from ticks to pointers.
     uint32_t total = 0;
     for (uint32_t i = 0; i < self->num_slices; i++) {
-        slice_starts[i] = (Obj*)(self->cache + total * sizeof(Obj*));
+        slice_starts[i] = self->cache + total;
         total += slice_sizes[i];
     }
 
@@ -292,7 +290,7 @@ S_absorb_slices(SortExternal *self, Obj **endpost) {
 void
 SortEx_grow_cache(SortExternal *self, uint32_t size) {
     if (size > self->cache_cap) {
-        self->cache = (uint8_t*)REALLOCATE(self->cache, size * sizeof(Obj*));
+        self->cache = (Obj**)REALLOCATE(self->cache, size * sizeof(Obj*));
         self->cache_cap = size;
     }
 }
@@ -301,7 +299,7 @@ static uint32_t
 S_find_slice_size(SortExternal *self, Obj **endpost) {
     int32_t          lo      = self->cache_tick - 1;
     int32_t          hi      = self->cache_max;
-    Obj            **cache   = (Obj**)self->cache;
+    Obj            **cache   = self->cache;
     SortEx_Compare_t compare
         = METHOD_PTR(SortEx_Get_VTable(self), Lucy_SortEx_Compare);
 

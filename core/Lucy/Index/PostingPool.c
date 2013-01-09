@@ -196,7 +196,7 @@ PostPool_flip(PostingPool *self) {
                            self->mem_pool, self->lex_temp_out,
                            self->post_temp_out, self->skip_out);
         PostPool_Grow_Cache(run, num_items);
-        memcpy(run->cache, ((Obj**)self->cache) + self->cache_tick,
+        memcpy(run->cache, (self->cache + self->cache_tick),
                num_items * sizeof(Obj*));
         run->cache_max = num_items;
         PostPool_Add_Run(self, (SortExternal*)run);
@@ -257,10 +257,10 @@ PostPool_shrink(PostingPool *self) {
         size_t cache_count = PostPool_Cache_Count(self);
         size_t size        = cache_count * sizeof(Obj*);
         if (self->cache_tick > 0) {
-            Obj **start = ((Obj**)self->cache) + self->cache_tick;
+            Obj **start = self->cache + self->cache_tick;
             memmove(self->cache, start, size);
         }
-        self->cache      = (uint8_t*)REALLOCATE(self->cache, size);
+        self->cache      = (Obj**)REALLOCATE(self->cache, size);
         self->cache_tick = 0;
         self->cache_max  = cache_count;
         self->cache_cap  = cache_count;
@@ -525,8 +525,7 @@ PostPool_refill(PostingPool *self) {
             size_t new_cap = Memory_oversize(num_elems + 1, sizeof(Obj*));
             PostPool_Grow_Cache(self, new_cap);
         }
-        Obj **cache = (Obj**)self->cache;
-        cache[num_elems] = (Obj*)raw_posting;
+        self->cache[num_elems] = (Obj*)raw_posting;
         num_elems++;
     }
 

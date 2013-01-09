@@ -48,7 +48,7 @@ BBSortEx_destroy(BBSortEx *self) {
 
 void
 BBSortEx_clear_cache(BBSortEx *self) {
-    Obj **const cache = (Obj**)self->cache;
+    Obj **const cache = self->cache;
     for (uint32_t i = self->cache_tick, max = self->cache_max; i < max; i++) {
         DECREF(cache[i]);
     }
@@ -75,7 +75,7 @@ BBSortEx_feed(BBSortEx *self, Obj *item) {
 void
 BBSortEx_flush(BBSortEx *self) {
     uint32_t     cache_count = self->cache_max - self->cache_tick;
-    Obj        **cache = (Obj**)self->cache;
+    Obj        **cache = self->cache;
     VArray      *elems;
 
     if (!cache_count) { return; }
@@ -128,8 +128,7 @@ BBSortEx_refill(BBSortEx *self) {
                                 Memory_oversize(self->cache_max + 1,
                                                 sizeof(Obj*)));
         }
-        Obj **cache = (Obj**)self->cache;
-        cache[self->cache_max++] = INCREF(elem);
+        self->cache[self->cache_max++] = INCREF(elem);
     }
 
     return self->cache_max;
