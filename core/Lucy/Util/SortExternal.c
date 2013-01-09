@@ -72,6 +72,10 @@ SortEx_destroy(SortExternal *self) {
 
 void
 SortEx_clear_cache(SortExternal *self) {
+    Obj **const cache = self->cache;
+    for (uint32_t i = self->cache_tick, max = self->cache_max; i < max; i++) {
+        DECREF(cache[i]);
+    }
     self->cache_max    = 0;
     self->cache_tick   = 0;
 }

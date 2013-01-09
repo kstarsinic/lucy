@@ -48,10 +48,6 @@ BBSortEx_destroy(BBSortEx *self) {
 
 void
 BBSortEx_clear_cache(BBSortEx *self) {
-    Obj **const cache = self->cache;
-    for (uint32_t i = self->cache_tick, max = self->cache_max; i < max; i++) {
-        DECREF(cache[i]);
-    }
     self->mem_consumed = 0;
     BBSortEx_Clear_Cache_t super_clear_cache
         = SUPER_METHOD_PTR(self->vtable, Lucy_BBSortEx_Clear_Cache);
