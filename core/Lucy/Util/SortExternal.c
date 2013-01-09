@@ -154,6 +154,37 @@ SortEx_add_run(SortExternal *self, SortExternal *run) {
                              num_runs * sizeof(Obj**));
 }
 
+void
+SortEx_shrink(SortExternal *self) {
+    if (self->cache_max - self->cache_tick > 0) {
+        size_t cache_count = SortEx_Cache_Count(self);
+        size_t size        = cache_count * sizeof(Obj*);
+        if (self->cache_tick > 0) {
+            Obj **start = self->cache + self->cache_tick;
+            memmove(self->cache, start, size);
+        }
+        self->cache      = (Obj**)REALLOCATE(self->cache, size);
+        self->cache_tick = 0;
+        self->cache_max  = cache_count;
+        self->cache_cap  = cache_count;
+    }
+    else {
+        FREEMEM(self->cache);
+        self->cache      = NULL;
+        self->cache_tick = 0;
+        self->cache_max  = 0;
+        self->cache_cap  = 0;
+    }
+    self->scratch_cap = 0;
+    FREEMEM(self->scratch);
+    self->scratch = NULL;
+
+    for (uint32_t i = 0, max = VA_Get_Size(self->runs); i < max; i++) {
+        SortExternal *run = (SortExternal*)VA_Fetch(self->runs, i);
+        SortEx_Shrink(run);
+    }
+}
+
 static void
 S_refill_cache(SortExternal *self) {
     // Reset cache vars.

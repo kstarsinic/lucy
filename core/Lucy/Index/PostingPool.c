@@ -252,35 +252,6 @@ PostPool_add_segment(PostingPool *self, SegReader *reader, I32Array *doc_map,
 }
 
 void
-PostPool_shrink(PostingPool *self) {
-    if (self->cache_max - self->cache_tick > 0) {
-        size_t cache_count = PostPool_Cache_Count(self);
-        size_t size        = cache_count * sizeof(Obj*);
-        if (self->cache_tick > 0) {
-            Obj **start = self->cache + self->cache_tick;
-            memmove(self->cache, start, size);
-        }
-        self->cache      = (Obj**)REALLOCATE(self->cache, size);
-        self->cache_tick = 0;
-        self->cache_max  = cache_count;
-        self->cache_cap  = cache_count;
-    }
-    else {
-        FREEMEM(self->cache);
-        self->cache      = NULL;
-        self->cache_tick = 0;
-        self->cache_max  = 0;
-        self->cache_cap  = 0;
-    }
-    self->scratch_cap = 0;
-    FREEMEM(self->scratch);
-    self->scratch = NULL;
-
-    // It's not necessary to iterate over the runs, because they don't have
-    // any cache costs until Refill() gets called.
-}
-
-void
 PostPool_flush(PostingPool *self) {
     // Don't add a run unless we have data to put in it.
     if (PostPool_Cache_Count(self) == 0) { return; }
