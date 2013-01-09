@@ -26,17 +26,17 @@ S_refill_cache(SortExternal *self);
 // Absorb all the items which are "in-range" from all the Runs into the main
 // cache.
 static void
-S_absorb_slices(SortExternal *self, uint8_t *endpost);
+S_absorb_slices(SortExternal *self, Obj **endpost);
 
 // Return the address for the item in one of the runs' caches which is the
 // highest in sort order, but which we can guarantee is lower in sort order
 // than any item which has yet to enter a run cache.
-static uint8_t*
+static Obj**
 S_find_endpost(SortExternal *self);
 
-// Determine how many cache items are less than or equal to [endpost].
+// Determine how many buffered items are less than or equal to `endpost`.
 static uint32_t
-S_find_slice_size(SortExternal *self, uint8_t *endpost);
+S_find_slice_size(SortExternal *self, Obj **endpost);
 
 SortExternal*
 SortEx_init(SortExternal *self) {
@@ -171,14 +171,14 @@ S_refill_cache(SortExternal *self) {
 
     // Absorb as many elems as possible from all runs into main cache.
     if (VA_Get_Size(self->runs)) {
-        uint8_t *endpost = S_find_endpost(self);
+        Obj **endpost = S_find_endpost(self);
         S_absorb_slices(self, endpost);
     }
 }
 
-static uint8_t*
+static Obj**
 S_find_endpost(SortExternal *self) {
-    uint8_t *endpost = NULL;
+    Obj **endpost = NULL;
 
     for (uint32_t i = 0, max = VA_Get_Size(self->runs); i < max; i++) {
         // Get a run and retrieve the last item in its cache.
@@ -191,7 +191,7 @@ S_find_endpost(SortExternal *self) {
         else {
             // Cache item with the highest sort value currently held in memory
             // by the run.
-            uint8_t *candidate = run->cache + tick * sizeof(Obj*);
+            Obj **candidate = (Obj**)run->cache + tick;
 
             // If it's the first run, item is automatically the new endpost.
             if (i == 0) {
@@ -208,7 +208,7 @@ S_find_endpost(SortExternal *self) {
 }
 
 static void
-S_absorb_slices(SortExternal *self, uint8_t *endpost) {
+S_absorb_slices(SortExternal *self, Obj **endpost) {
     uint32_t    num_runs     = VA_Get_Size(self->runs);
     Obj       **slice_starts = self->slice_starts;
     uint32_t   *slice_sizes  = self->slice_sizes;
@@ -298,17 +298,17 @@ SortEx_grow_cache(SortExternal *self, uint32_t size) {
 }
 
 static uint32_t
-S_find_slice_size(SortExternal *self, uint8_t *endpost) {
+S_find_slice_size(SortExternal *self, Obj **endpost) {
     int32_t          lo      = self->cache_tick - 1;
     int32_t          hi      = self->cache_max;
-    uint8_t *const   cache   = self->cache;
+    Obj            **cache   = (Obj**)self->cache;
     SortEx_Compare_t compare
         = METHOD_PTR(SortEx_Get_VTable(self), Lucy_SortEx_Compare);
 
     // Binary search.
     while (hi - lo > 1) {
         const int32_t mid   = lo + ((hi - lo) / 2);
-        const int32_t delta = compare(self, cache + mid * sizeof(Obj*), endpost);
+        const int32_t delta = compare(self, cache + mid, endpost);
         if (delta > 0) { hi = mid; }
         else           { lo = mid; }
     }
