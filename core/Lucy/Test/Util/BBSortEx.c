@@ -70,8 +70,8 @@ BBSortEx_feed(BBSortEx *self, Obj *item) {
 
 void
 BBSortEx_flush(BBSortEx *self) {
-    uint32_t     cache_count = self->cache_max - self->cache_tick;
-    Obj        **cache = self->cache;
+    uint32_t     cache_count = self->buf_max - self->buf_tick;
+    Obj        **buffer = self->buffer;
     VArray      *elems;
 
     if (!cache_count) { return; }
@@ -79,27 +79,27 @@ BBSortEx_flush(BBSortEx *self) {
 
     // Sort, then create a new run.
     BBSortEx_Sort_Cache(self);
-    for (uint32_t i = self->cache_tick; i < self->cache_max; i++) {
-        VA_Push(elems, cache[i]);
+    for (uint32_t i = self->buf_tick; i < self->buf_max; i++) {
+        VA_Push(elems, buffer[i]);
     }
     BBSortEx *run = BBSortEx_new(0, elems);
     DECREF(elems);
     BBSortEx_Add_Run(self, (SortExternal*)run);
 
     // Blank the cache vars.
-    self->cache_tick += cache_count;
+    self->buf_tick += cache_count;
     BBSortEx_Clear_Cache(self);
 }
 
 uint32_t
 BBSortEx_refill(BBSortEx *self) {
     // Make sure cache is empty, then set cache tick vars.
-    if (self->cache_max - self->cache_tick > 0) {
+    if (self->buf_max - self->buf_tick > 0) {
         THROW(ERR, "Refill called but cache contains %u32 items",
-              self->cache_max - self->cache_tick);
+              self->buf_max - self->buf_tick);
     }
-    self->cache_tick = 0;
-    self->cache_max  = 0;
+    self->buf_tick = 0;
+    self->buf_max  = 0;
 
     // Read in elements.
     while (1) {
@@ -119,15 +119,15 @@ BBSortEx_refill(BBSortEx *self) {
             self->mem_consumed += BB_Get_Size(elem);
         }
 
-        if (self->cache_max == self->cache_cap) {
+        if (self->buf_max == self->buf_cap) {
             BBSortEx_Grow_Cache(self,
-                                Memory_oversize(self->cache_max + 1,
+                                Memory_oversize(self->buf_max + 1,
                                                 sizeof(Obj*)));
         }
-        self->cache[self->cache_max++] = INCREF(elem);
+        self->buffer[self->buf_max++] = INCREF(elem);
     }
 
-    return self->cache_max;
+    return self->buf_max;
 }
 
 void

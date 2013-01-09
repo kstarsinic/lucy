@@ -187,7 +187,7 @@ PostPool_flip(PostingPool *self) {
     }
 
     PostPool_Sort_Cache(self);
-    if (num_runs && (self->cache_max - self->cache_tick) > 0) {
+    if (num_runs && (self->buf_max - self->buf_tick) > 0) {
         uint32_t num_items = PostPool_Cache_Count(self);
         // Cheap imitation of flush. FIXME.
         PostingPool *run
@@ -196,12 +196,12 @@ PostPool_flip(PostingPool *self) {
                            self->mem_pool, self->lex_temp_out,
                            self->post_temp_out, self->skip_out);
         PostPool_Grow_Cache(run, num_items);
-        memcpy(run->cache, (self->cache + self->cache_tick),
+        memcpy(run->buffer, (self->buffer + self->buf_tick),
                num_items * sizeof(Obj*));
-        run->cache_max = num_items;
+        run->buf_max = num_items;
         PostPool_Add_Run(self, (SortExternal*)run);
-        self->cache_tick = 0;
-        self->cache_max = 0;
+        self->buf_tick = 0;
+        self->buf_max = 0;
     }
 
     // Assign.
@@ -267,10 +267,10 @@ PostPool_flush(PostingPool *self) {
                                             self->post_temp_out);
 
     // Borrow the cache.
-    run->cache      = self->cache;
-    run->cache_tick = self->cache_tick;
-    run->cache_max  = self->cache_max;
-    run->cache_cap  = self->cache_cap;
+    run->buffer   = self->buffer;
+    run->buf_tick = self->buf_tick;
+    run->buf_max  = self->buf_max;
+    run->buf_cap  = self->buf_cap;
 
     // Write to temp files.
     LexWriter_Enter_Temp_Mode(self->lex_writer, self->field,
@@ -285,10 +285,10 @@ PostPool_flush(PostingPool *self) {
     LexWriter_Leave_Temp_Mode(self->lex_writer);
 
     // Return the cache and empty it.
-    run->cache      = NULL;
-    run->cache_tick = 0;
-    run->cache_max  = 0;
-    run->cache_cap  = 0;
+    run->buffer   = NULL;
+    run->buf_tick = 0;
+    run->buf_max  = 0;
+    run->buf_cap  = 0;
     PostPool_Clear_Cache(self);
 
     // Add the run to the array.
@@ -437,12 +437,12 @@ PostPool_refill(PostingPool *self) {
     else { term_text = (CharBuf*)Lex_Get_Term(lexicon); }
 
     // Make sure cache is empty.
-    if (self->cache_max - self->cache_tick > 0) {
+    if (self->buf_max - self->buf_tick > 0) {
         THROW(ERR, "Refill called but cache contains %u32 items",
-              self->cache_max - self->cache_tick);
+              self->buf_max - self->buf_tick);
     }
-    self->cache_max  = 0;
-    self->cache_tick = 0;
+    self->buf_max  = 0;
+    self->buf_tick = 0;
 
     // Ditch old MemoryPool and get another.
     DECREF(self->mem_pool);
@@ -492,17 +492,17 @@ PostPool_refill(PostingPool *self) {
         }
 
         // Add to the run's cache.
-        if (num_elems >= self->cache_cap) {
+        if (num_elems >= self->buf_cap) {
             size_t new_cap = Memory_oversize(num_elems + 1, sizeof(Obj*));
             PostPool_Grow_Cache(self, new_cap);
         }
-        self->cache[num_elems] = (Obj*)raw_posting;
+        self->buffer[num_elems] = (Obj*)raw_posting;
         num_elems++;
     }
 
     // Reset the cache array position and length; remember file pos.
-    self->cache_max   = num_elems;
-    self->cache_tick  = 0;
+    self->buf_max  = num_elems;
+    self->buf_tick = 0;
 
     return num_elems;
 }

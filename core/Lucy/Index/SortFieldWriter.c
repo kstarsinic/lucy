@@ -381,10 +381,10 @@ SortFieldWriter_flush(SortFieldWriter *self) {
     run->dat_start = OutStream_Align(temp_dat_out, sizeof(int64_t));
 
     // Have the run borrow the array of elems.
-    run->cache      = self->cache;
-    run->cache_max  = self->cache_max;
-    run->cache_tick = self->cache_tick;
-    run->cache_cap  = self->cache_cap;
+    run->buffer   = self->buffer;
+    run->buf_max  = self->buf_max;
+    run->buf_tick = self->buf_tick;
+    run->buf_cap  = self->buf_cap;
 
     // Write files, record stats.
     run->run_max = (int32_t)Seg_Get_Count(self->segment);
@@ -392,11 +392,11 @@ SortFieldWriter_flush(SortFieldWriter *self) {
                                          temp_dat_out);
 
     // Reclaim the buffer from the run and empty it.
-    run->cache       = NULL;
-    run->cache_max   = 0;
-    run->cache_tick  = 0;
-    run->cache_cap   = 0;
-    self->cache_tick = self->cache_max;
+    run->buffer    = NULL;
+    run->buf_max   = 0;
+    run->buf_tick  = 0;
+    run->buf_cap   = 0;
+    self->buf_tick = self->buf_max;
     SortFieldWriter_Clear_Cache(self);
 
     // Record stream ends.
