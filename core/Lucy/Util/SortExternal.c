@@ -63,7 +63,7 @@ SortEx_destroy(SortExternal *self) {
     FREEMEM(self->slice_sizes);
     FREEMEM(self->slice_starts);
     if (self->buffer) {
-        SortEx_Clear_Cache(self);
+        SortEx_Clear_Buffer(self);
         FREEMEM(self->buffer);
     }
     DECREF(self->runs);
@@ -71,7 +71,7 @@ SortEx_destroy(SortExternal *self) {
 }
 
 void
-SortEx_clear_cache(SortExternal *self) {
+SortEx_clear_buffer(SortExternal *self) {
     Obj **const buffer = self->buffer;
     for (uint32_t i = self->buf_tick, max = self->buf_max; i < max; i++) {
         DECREF(buffer[i]);
@@ -84,7 +84,7 @@ void
 SortEx_feed(SortExternal *self, Obj *item) {
     if (self->buf_max == self->buf_cap) {
         size_t amount = Memory_oversize(self->buf_max + 1, sizeof(Obj*));
-        SortEx_Grow_Cache(self, amount);
+        SortEx_Grow_Buffer(self, amount);
     }
     self->buffer[self->buf_max] = item;
     self->buf_max++;
@@ -117,9 +117,9 @@ SortEx_peek(SortExternal *self) {
 }
 
 void
-SortEx_sort_cache(SortExternal *self) {
+SortEx_sort_buffer(SortExternal *self) {
     if (self->buf_tick != 0) {
-        THROW(ERR, "Cant Sort_Cache() after fetching %u32 items", self->buf_tick);
+        THROW(ERR, "Cant Sort_Buffer() after fetching %u32 items", self->buf_tick);
     }
     if (self->buf_max != 0) {
         VTable *vtable = SortEx_Get_VTable(self);
@@ -157,16 +157,16 @@ SortEx_add_run(SortExternal *self, SortExternal *run) {
 void
 SortEx_shrink(SortExternal *self) {
     if (self->buf_max - self->buf_tick > 0) {
-        size_t cache_count = SortEx_Cache_Count(self);
-        size_t size        = cache_count * sizeof(Obj*);
+        size_t buf_count = SortEx_Buffer_Count(self);
+        size_t size        = buf_count * sizeof(Obj*);
         if (self->buf_tick > 0) {
             Obj **start = self->buffer + self->buf_tick;
             memmove(self->buffer, start, size);
         }
         self->buffer   = (Obj**)REALLOCATE(self->buffer, size);
         self->buf_tick = 0;
-        self->buf_max  = cache_count;
-        self->buf_cap  = cache_count;
+        self->buf_max  = buf_count;
+        self->buf_cap  = buf_count;
     }
     else {
         FREEMEM(self->buffer);
@@ -188,13 +188,13 @@ SortEx_shrink(SortExternal *self) {
 static void
 S_refill_cache(SortExternal *self) {
     // Reset cache vars.
-    SortEx_Clear_Cache(self);
+    SortEx_Clear_Buffer(self);
 
     // Make sure all runs have at least one item in the cache.
     uint32_t i = 0;
     while (i < VA_Get_Size(self->runs)) {
         SortExternal *const run = (SortExternal*)VA_Fetch(self->runs, i);
-        if (SortEx_Cache_Count(run) > 0 || SortEx_Refill(run) > 0) {
+        if (SortEx_Buffer_Count(run) > 0 || SortEx_Refill(run) > 0) {
             i++; // Run has some elements, so keep.
         }
         else {
@@ -261,7 +261,7 @@ S_absorb_slices(SortExternal *self, Obj **endpost) {
             if (self->buf_max + slice_size > self->buf_cap) {
                 size_t cap = Memory_oversize(self->buf_max + slice_size,
                                              sizeof(Obj*));
-                SortEx_Grow_Cache(self, cap);
+                SortEx_Grow_Buffer(self, cap);
             }
             memcpy(self->buffer + self->buf_max,
                    run->buffer + run->buf_tick,
@@ -323,7 +323,7 @@ S_absorb_slices(SortExternal *self, Obj **endpost) {
 }
 
 void
-SortEx_grow_cache(SortExternal *self, uint32_t size) {
+SortEx_grow_buffer(SortExternal *self, uint32_t size) {
     if (size > self->buf_cap) {
         self->buffer = (Obj**)REALLOCATE(self->buffer, size * sizeof(Obj*));
         self->buf_cap = size;
@@ -358,7 +358,7 @@ SortEx_set_mem_thresh(SortExternal *self, uint32_t mem_thresh) {
 }
 
 uint32_t
-SortEx_cache_count(SortExternal *self) {
+SortEx_buffer_count(SortExternal *self) {
     return self->buf_max - self->buf_tick;
 }
 

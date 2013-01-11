@@ -186,16 +186,16 @@ PostPool_flip(PostingPool *self) {
         DECREF(post_temp_path);
     }
 
-    PostPool_Sort_Cache(self);
+    PostPool_Sort_Buffer(self);
     if (num_runs && (self->buf_max - self->buf_tick) > 0) {
-        uint32_t num_items = PostPool_Cache_Count(self);
+        uint32_t num_items = PostPool_Buffer_Count(self);
         // Cheap imitation of flush. FIXME.
         PostingPool *run
             = PostPool_new(self->schema, self->snapshot, self->segment,
                            self->polyreader, self->field, self->lex_writer,
                            self->mem_pool, self->lex_temp_out,
                            self->post_temp_out, self->skip_out);
-        PostPool_Grow_Cache(run, num_items);
+        PostPool_Grow_Buffer(run, num_items);
         memcpy(run->buffer, (self->buffer + self->buf_tick),
                num_items * sizeof(Obj*));
         run->buf_max = num_items;
@@ -254,7 +254,7 @@ PostPool_add_segment(PostingPool *self, SegReader *reader, I32Array *doc_map,
 void
 PostPool_flush(PostingPool *self) {
     // Don't add a run unless we have data to put in it.
-    if (PostPool_Cache_Count(self) == 0) { return; }
+    if (PostPool_Buffer_Count(self) == 0) { return; }
 
     PostingPool *run
         = PostPool_new(self->schema, self->snapshot, self->segment,
@@ -277,7 +277,7 @@ PostPool_flush(PostingPool *self) {
                               self->lex_temp_out);
     run->lex_start  = OutStream_Tell(self->lex_temp_out);
     run->post_start = OutStream_Tell(self->post_temp_out);
-    PostPool_Sort_Cache(self);
+    PostPool_Sort_Buffer(self);
     S_write_terms_and_postings(run, post_writer, NULL);
 
     run->lex_end  = OutStream_Tell(self->lex_temp_out);
@@ -289,7 +289,7 @@ PostPool_flush(PostingPool *self) {
     run->buf_tick = 0;
     run->buf_max  = 0;
     run->buf_cap  = 0;
-    PostPool_Clear_Cache(self);
+    PostPool_Clear_Buffer(self);
 
     // Add the run to the array.
     PostPool_Add_Run(self, (SortExternal*)run);
@@ -494,7 +494,7 @@ PostPool_refill(PostingPool *self) {
         // Add to the run's cache.
         if (num_elems >= self->buf_cap) {
             size_t new_cap = Memory_oversize(num_elems + 1, sizeof(Obj*));
-            PostPool_Grow_Cache(self, new_cap);
+            PostPool_Grow_Buffer(self, new_cap);
         }
         self->buffer[num_elems] = (Obj*)raw_posting;
         num_elems++;
@@ -521,7 +521,7 @@ S_fresh_flip(PostingPool *self, InStream *lex_temp_in,
     self->flipped = true;
 
     // Sort RawPostings in cache, if any.
-    PostPool_Sort_Cache(self);
+    PostPool_Sort_Buffer(self);
 
     // Bail if never flushed.
     if (self->lex_end == 0) { return; }
