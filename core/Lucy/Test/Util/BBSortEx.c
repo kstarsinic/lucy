@@ -86,16 +86,16 @@ BBSortEx_flush(BBSortEx *self) {
     DECREF(elems);
     BBSortEx_Add_Run(self, (SortExternal*)run);
 
-    // Blank the cache vars.
+    // Blank the buffer vars.
     self->buf_tick += buf_count;
     BBSortEx_Clear_Buffer(self);
 }
 
 uint32_t
 BBSortEx_refill(BBSortEx *self) {
-    // Make sure cache is empty, then set cache tick vars.
+    // Make sure buffer is empty, then set buffer tick vars.
     if (self->buf_max - self->buf_tick > 0) {
-        THROW(ERR, "Refill called but cache contains %u32 items",
+        THROW(ERR, "Refill called but buffer contains %u32 items",
               self->buf_max - self->buf_tick);
     }
     self->buf_tick = 0;

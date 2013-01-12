@@ -266,7 +266,7 @@ PostPool_flush(PostingPool *self) {
                                             self->segment, self->polyreader,
                                             self->post_temp_out);
 
-    // Borrow the cache.
+    // Borrow the buffer.
     run->buffer   = self->buffer;
     run->buf_tick = self->buf_tick;
     run->buf_max  = self->buf_max;
@@ -284,7 +284,7 @@ PostPool_flush(PostingPool *self) {
     run->post_end = OutStream_Tell(self->post_temp_out);
     LexWriter_Leave_Temp_Mode(self->lex_writer);
 
-    // Return the cache and empty it.
+    // Return the buffer and empty it.
     run->buffer   = NULL;
     run->buf_tick = 0;
     run->buf_max  = 0;
@@ -436,9 +436,9 @@ PostPool_refill(PostingPool *self) {
     if (self->lexicon == NULL) { return 0; }
     else { term_text = (CharBuf*)Lex_Get_Term(lexicon); }
 
-    // Make sure cache is empty.
+    // Make sure buffer is empty.
     if (self->buf_max - self->buf_tick > 0) {
-        THROW(ERR, "Refill called but cache contains %u32 items",
+        THROW(ERR, "Refill called but buffer contains %u32 items",
               self->buf_max - self->buf_tick);
     }
     self->buf_max  = 0;
@@ -470,7 +470,7 @@ PostPool_refill(PostingPool *self) {
             }
         }
 
-        // Bail if we've hit the ceiling for this run's cache.
+        // Bail if we've hit the ceiling for this run's buffer.
         if (mem_pool->consumed >= mem_thresh && num_elems > 0) {
             break;
         }
@@ -491,7 +491,7 @@ PostPool_refill(PostingPool *self) {
             raw_posting->doc_id = remapped;
         }
 
-        // Add to the run's cache.
+        // Add to the run's buffer.
         if (num_elems >= self->buf_cap) {
             size_t new_cap = Memory_oversize(num_elems + 1, sizeof(Obj*));
             PostPool_Grow_Buffer(self, new_cap);
@@ -500,7 +500,7 @@ PostPool_refill(PostingPool *self) {
         num_elems++;
     }
 
-    // Reset the cache array position and length; remember file pos.
+    // Reset the buffer array position and length; remember file pos.
     self->buf_max  = num_elems;
     self->buf_tick = 0;
 
@@ -520,7 +520,7 @@ S_fresh_flip(PostingPool *self, InStream *lex_temp_in,
     if (self->flipped) { THROW(ERR, "Can't Flip twice"); }
     self->flipped = true;
 
-    // Sort RawPostings in cache, if any.
+    // Sort RawPostings in buffer, if any.
     PostPool_Sort_Buffer(self);
 
     // Bail if never flushed.

@@ -414,7 +414,7 @@ uint32_t
 SortFieldWriter_refill(SortFieldWriter *self) {
     if (!self->sort_cache) { return 0; }
 
-    // Sanity check, then reset the cache and prepare to start loading items.
+    // Sanity check, then reset the buffer and prepare to start loading items.
     uint32_t buf_count = SortFieldWriter_Buffer_Count(self);
     if (buf_count) {
         THROW(ERR, "Refill called but cache contains %u32 items",
