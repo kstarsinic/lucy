@@ -607,24 +607,21 @@ CB_trim(CharBuf *self) {
 
 uint32_t
 CB_trim_top(CharBuf *self) {
-    char     *ptr   = self->ptr;
-    char     *end   = ptr + self->size;
-    uint32_t  count = 0;
+    CharBufIterator *iter   = CB_ZTOP(self);
+    size_t           count  = 0;
+    size_t           offset = 0;
 
-    while (ptr < end) {
-        uint32_t code_point = StrHelp_decode_utf8_char(ptr);
+    while (iter->byte_offset < self->size) {
+        uint32_t code_point = CBIter_Next(iter);
         if (!StrHelp_is_whitespace(code_point)) { break; }
-        ptr += StrHelp_UTF8_COUNT[*(uint8_t*)ptr];
+        offset = iter->byte_offset;
         count++;
-    }
-    if (ptr > end) {
-        DIE_INVALID_UTF8(self->ptr, self->size);
     }
 
     if (count) {
         // Copy string backwards.
-        self->size = end - ptr;
-        memmove(self->ptr, ptr, self->size);
+        self->size -= offset;
+        memmove(self->ptr, self->ptr + offset, self->size);
     }
 
     return count;
@@ -632,15 +629,14 @@ CB_trim_top(CharBuf *self) {
 
 uint32_t
 CB_trim_tail(CharBuf *self) {
-    uint32_t      count    = 0;
-    char *const   top      = self->ptr;
-    const char   *ptr      = top + self->size;
-    size_t        new_size = self->size;
+    CharBufIterator *iter     = CB_ZTAIL(self);
+    size_t           count    = 0;
+    size_t           new_size = self->size;
 
-    while (NULL != (ptr = StrHelp_back_utf8_char(ptr, top))) {
-        uint32_t code_point = StrHelp_decode_utf8_char(ptr);
+    while (iter->byte_offset > 0) {
+        uint32_t code_point = CBIter_Prev(iter);
         if (!StrHelp_is_whitespace(code_point)) { break; }
-        new_size = ptr - top;
+        new_size = iter->byte_offset;
         count++;
     }
     self->size = new_size;
