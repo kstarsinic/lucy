@@ -17,6 +17,9 @@
 #define C_LUCY_CHARBUF
 #define C_LUCY_VIEWCHARBUF
 #define C_LUCY_ZOMBIECHARBUF
+#define C_LUCY_CHARBUFITERATOR
+#define C_LUCY_UTF8ITERATOR
+#define C_LUCY_ZOMBIEUTF8ITERATOR
 #define LUCY_USE_SHORT_NAMES
 #define CHY_USE_SHORT_NAMES
 
@@ -799,6 +802,31 @@ CB_get_ptr8(CharBuf *self) {
     return (uint8_t*)self->ptr;
 }
 
+CharBufIterator*
+CB_top(CharBuf *self) {
+    return (CharBufIterator*)UTF8Iter_new(self, 0);
+}
+
+CharBufIterator*
+CB_tail(CharBuf *self) {
+    return (CharBufIterator*)UTF8Iter_new(self, self->size);
+}
+
+size_t
+CB_iterator_size(CharBuf *self) {
+    return sizeof(ZombieUTF8Iterator);
+}
+
+CharBufIterator*
+CB_ztop(CharBuf *self, void *allocation) {
+    return (CharBufIterator*)ZUTF8Iter_new(allocation, self, 0);
+}
+
+CharBufIterator*
+CB_ztail(CharBuf *self, void *allocation) {
+    return (CharBufIterator*)ZUTF8Iter_new(allocation, self, self->size);
+}
+
 /*****************************************************************/
 
 ViewCharBuf*
@@ -974,6 +1002,84 @@ ZCB_size() {
 void
 ZCB_destroy(ZombieCharBuf *self) {
     THROW(ERR, "Can't destroy a ZombieCharBuf ('%o')", self);
+}
+
+/*****************************************************************/
+
+bool
+CBIter_has_next(CharBufIterator *self) {
+    return self->byte_offset < self->char_buf->size;
+}
+
+bool
+CBIter_has_prev(CharBufIterator *self) {
+    return self->byte_offset != 0;
+}
+
+void
+CBIter_destroy(CharBufIterator *self) {
+    DECREF(self->char_buf);
+}
+
+/*****************************************************************/
+
+UTF8Iterator*
+UTF8Iter_new(CharBuf *char_buf, size_t byte_offset) {
+    UTF8Iterator *self = (UTF8Iterator*)VTable_Make_Obj(CHARBUFITERATOR);
+    return UTF8Iter_init(self, char_buf, byte_offset);
+}
+
+UTF8Iterator*
+UTF8Iter_init(UTF8Iterator *self, CharBuf *char_buf, size_t byte_offset) {
+    self->char_buf    = (CharBuf*)INCREF(char_buf);
+    self->byte_offset = byte_offset;
+    return self;
+}
+
+uint32_t
+UTF8Iter_next(UTF8Iterator *self) {
+    CharBuf *char_buf = self->char_buf;
+    if (self->byte_offset >= char_buf->size) {
+        THROW(ERR, "Iteration past end of string");
+    }
+    const char *ptr        = char_buf->ptr + self->byte_offset;
+    uint32_t    code_point = StrHelp_decode_utf8_char(ptr);
+    self->byte_offset += StrHelp_UTF8_COUNT[*(uint8_t*)ptr];
+    return code_point;
+}
+
+uint32_t
+UTF8Iter_prev(UTF8Iterator *self) {
+    if (self->byte_offset == 0) {
+        THROW(ERR, "Iteration past start of string");
+    }
+    CharBuf    *char_buf = self->char_buf;
+    const char *start    = char_buf->ptr;
+    const char *ptr      = start + self->byte_offset;
+    const char *prev_ptr = StrHelp_back_utf8_char(ptr, start);
+    if (prev_ptr == NULL) {
+        DIE_INVALID_UTF8(start, char_buf->size);
+    }
+    uint32_t code_point = StrHelp_decode_utf8_char(prev_ptr);
+    self->byte_offset -= ptr - prev_ptr;
+    return code_point;
+}
+
+/*****************************************************************/
+
+ZombieUTF8Iterator*
+ZUTF8Iter_new(void *allocation, CharBuf *char_buf, size_t byte_offset) {
+    ZombieUTF8Iterator *self = (ZombieUTF8Iterator*)allocation;
+    self->ref.count   = 1;
+    self->vtable      = ZOMBIEUTF8ITERATOR;
+    self->char_buf    = char_buf; // Assumes that char_buf won't be destroyed.
+    self->byte_offset = byte_offset;
+    return self;
+}
+
+void
+ZUTF8Iter_destroy(ZombieUTF8Iterator *self) {
+    THROW(ERR, "Can't destroy a ZombieUTF8Iterator");
 }
 
 

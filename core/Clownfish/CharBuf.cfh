@@ -311,6 +311,31 @@ class Clownfish::CharBuf cnick CB
      */
     void
     Cat_Trusted_Str(CharBuf *self, const char *ptr, size_t size);
+
+    /** Return an iterator to the start of the string.
+     */
+    incremented CharBufIterator*
+    Top(CharBuf *self);
+
+    /** Return an iterator to the end of the string.
+      */
+    incremented CharBufIterator*
+    Tail(CharBuf *self);
+
+    /** Return the size of the iterator struct.
+     */
+    size_t
+    Iterator_Size(CharBuf *self);
+
+    /** Return a zombie iterator to the start of the string.
+     */
+    incremented CharBufIterator*
+    ZTop(CharBuf *self, void *allocation);
+
+    /** Return a zombie iterator to the end of the string.
+     */
+    incremented CharBufIterator*
+    ZTail(CharBuf *self, void *allocation);
 }
 
 class Clownfish::ViewCharBuf cnick ViewCB
@@ -385,6 +410,63 @@ class Clownfish::ZombieCharBuf cnick ZCB
     Destroy(ZombieCharBuf *self);
 }
 
+class Clownfish::CharBufIterator cnick CBIter
+    inherits Clownfish::Obj {
+
+    CharBuf *char_buf;
+    size_t   byte_offset;
+
+    /** Return true if the iterator is not at the end of the string.
+     */
+    bool
+    Has_Next(CharBufIterator *self);
+
+    /** Return true if the iterator is not at the start of the string.
+     */
+    bool
+    Has_Prev(CharBufIterator *self);
+
+    /** Return the character after the current position and advance the
+     * iterator.
+     */
+    abstract uint32_t
+    Next(CharBufIterator *self);
+
+    /** Return the character before the current position and go one step back.
+     */
+    abstract uint32_t
+    Prev(CharBufIterator *self);
+
+    public void
+    Destroy(CharBufIterator *self);
+}
+
+class Clownfish::UTF8Iterator cnick UTF8Iter
+    inherits Clownfish::CharBufIterator {
+
+    inert incremented UTF8Iterator*
+    new(CharBuf *char_buf, size_t byte_offset);
+
+    inert UTF8Iterator*
+    init(UTF8Iterator *self, CharBuf *char_buf, size_t byte_offset);
+
+    uint32_t
+    Next(UTF8Iterator *self);
+
+    uint32_t
+    Prev(UTF8Iterator *self);
+}
+
+class Clownfish::ZombieUTF8Iterator cnick ZUTF8Iter
+    inherits Clownfish::UTF8Iterator {
+
+    inert incremented ZombieUTF8Iterator*
+    new(void *allocation, CharBuf *char_buf, size_t byte_offset);
+
+    public void
+    Destroy(ZombieUTF8Iterator *self);
+}
+
 __C__
 
 #define CFISH_ZCB_BLANK() lucy_ZCB_new(alloca(lucy_ZCB_size()))
@@ -395,10 +477,18 @@ __C__
 #define CFISH_ZCB_WRAP_STR(ptr, size) \
     lucy_ZCB_wrap_str(alloca(lucy_ZCB_size()), ptr, size)
 
+#define CFISH_CB_ZTOP(cb) \
+    Lucy_CB_ZTop(cb, alloca(Lucy_CB_Iterator_Size(cb)))
+
+#define CFISH_CB_ZTAIL(cb) \
+    Lucy_CB_ZTail(cb, alloca(Lucy_CB_Iterator_Size(cb)))
+
 #ifdef LUCY_USE_SHORT_NAMES
   #define ZCB_BLANK             CFISH_ZCB_BLANK
   #define ZCB_WRAP              CFISH_ZCB_WRAP
   #define ZCB_WRAP_STR          CFISH_ZCB_WRAP_STR
+  #define CB_ZTOP               CFISH_CB_ZTOP
+  #define CB_ZTAIL              CFISH_CB_ZTAIL
 #endif
 __END_C__
 
