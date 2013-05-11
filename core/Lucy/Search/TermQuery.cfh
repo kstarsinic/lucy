@@ -29,7 +29,7 @@ public class Lucy::Search::TermQuery inherits Lucy::Search::Query
     CharBuf *field;
     Obj     *term;
 
-    inert incremented TermQuery*
+    public inert incremented TermQuery*
     new(const CharBuf *field, const Obj *term);
 
     /**

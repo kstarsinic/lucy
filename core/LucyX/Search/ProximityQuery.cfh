@@ -29,7 +29,7 @@ public class LucyX::Search::ProximityQuery inherits Lucy::Search::Query
     VArray        *terms;
     uint32_t       within;
 
-    inert incremented ProximityQuery*
+    public inert incremented ProximityQuery*
     new(const CharBuf *field, VArray *terms, uint32_t within);
 
     /**

@@ -31,7 +31,7 @@ public class Lucy::Search::RangeQuery inherits Lucy::Search::Query
     bool      include_lower;
     bool      include_upper;
 
-    inert incremented RangeQuery*
+    public inert incremented RangeQuery*
     new(const CharBuf *field, Obj *lower_term = NULL, Obj *upper_term = NULL,
         bool include_lower = true, bool include_upper = true);
 

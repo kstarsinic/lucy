@@ -59,7 +59,7 @@ public class Lucy::Analysis::RegexTokenizer
     inert bool
     is_available();
 
-    inert incremented RegexTokenizer*
+    public inert incremented RegexTokenizer*
     new(const CharBuf *pattern = NULL);
 
     /**

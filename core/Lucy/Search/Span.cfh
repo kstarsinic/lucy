@@ -32,7 +32,7 @@ public class Lucy::Search::Span inherits Clownfish::Obj {
     int32_t length;
     float   weight;
 
-    inert incremented Span*
+    public inert incremented Span*
     new(int32_t offset, int32_t length, float weight = 0.0);
 
     /**

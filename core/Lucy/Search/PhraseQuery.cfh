@@ -28,7 +28,7 @@ public class Lucy::Search::PhraseQuery inherits Lucy::Search::Query
     CharBuf       *field;
     VArray        *terms;
 
-    inert incremented PhraseQuery*
+    public inert incremented PhraseQuery*
     new(const CharBuf *field, VArray *terms);
 
     /**

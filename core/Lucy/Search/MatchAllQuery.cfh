@@ -26,7 +26,7 @@ parcel Lucy;
 public abstract class Lucy::Search::MatchAllQuery
     inherits Lucy::Search::Query : dumpable {
 
-    inert incremented MatchAllQuery*
+    public inert incremented MatchAllQuery*
     new();
 
     /** Constructor.  Takes no arguments.

@@ -35,7 +35,7 @@ public class Lucy::Highlight::Highlighter inherits Clownfish::Obj {
     CharBuf    *post_tag;
     Compiler   *compiler;
 
-    inert incremented Highlighter*
+    public inert incremented Highlighter*
     new(Searcher *searcher, Obj *query, const CharBuf *field,
         uint32_t excerpt_length = 200);
 

@@ -31,7 +31,7 @@ public class Lucy::Analysis::SnowballStemmer cnick SnowStemmer
     void *snowstemmer;
     CharBuf *language;
 
-    inert incremented SnowballStemmer*
+    public inert incremented SnowballStemmer*
     new(const CharBuf *language);
 
     /**

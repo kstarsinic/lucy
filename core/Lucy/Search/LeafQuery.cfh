@@ -31,7 +31,7 @@ public class Lucy::Search::LeafQuery inherits Lucy::Search::Query
     CharBuf *field;
     CharBuf *text;
 
-    inert incremented LeafQuery*
+    public inert incremented LeafQuery*
     new(const CharBuf *field = NULL, const CharBuf *text);
 
     /**

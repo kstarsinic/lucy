@@ -35,7 +35,7 @@ public class Lucy::Search::IndexSearcher cnick IxSearcher
     VArray            *seg_readers;
     I32Array          *seg_starts;
 
-    inert incremented IndexSearcher*
+    public inert incremented IndexSearcher*
     new(Obj *index);
 
     /**

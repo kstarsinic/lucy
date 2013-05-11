@@ -24,7 +24,7 @@ parcel Lucy;
 
 public class Lucy::Store::RAMFolder inherits Lucy::Store::Folder {
 
-    inert incremented RAMFolder*
+    public inert incremented RAMFolder*
     new(const CharBuf *path = NULL);
 
     /**

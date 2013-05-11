@@ -51,7 +51,7 @@ public class Lucy::Search::QueryParser cnick QParser
     bool        heed_colons;
     int32_t     default_occur;
 
-    inert incremented QueryParser*
+    public inert incremented QueryParser*
     new(Schema *schema, Analyzer *analyzer = NULL,
         const CharBuf *default_boolop = NULL, VArray *fields = NULL);
 

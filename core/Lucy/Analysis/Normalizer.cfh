@@ -32,7 +32,7 @@ public class Lucy::Analysis::Normalizer
 
     int options;
 
-    inert incremented Normalizer*
+    public inert incremented Normalizer*
     new(const CharBuf *normalization_form = NULL, bool case_fold = true,
         bool strip_accents = false);
 

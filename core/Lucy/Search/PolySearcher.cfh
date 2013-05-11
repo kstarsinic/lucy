@@ -29,7 +29,7 @@ public class Lucy::Search::PolySearcher
     I32Array  *starts;
     int32_t    doc_max;
 
-    inert incremented PolySearcher*
+    public inert incremented PolySearcher*
     new(Schema *schema, VArray *searchers);
 
     /**

@@ -49,7 +49,7 @@ public class Lucy::Analysis::EasyAnalyzer
     Normalizer *normalizer;
     SnowballStemmer *stemmer;
 
-    inert incremented EasyAnalyzer*
+    public inert incremented EasyAnalyzer*
     new(const CharBuf *language = NULL);
 
     /**

@@ -27,7 +27,7 @@ public class Lucy::Object::BitVector cnick BitVec
     uint32_t  cap;
     uint8_t  *bits;
 
-    inert incremented BitVector*
+    public inert incremented BitVector*
     new(uint32_t capacity = 0);
 
     /**

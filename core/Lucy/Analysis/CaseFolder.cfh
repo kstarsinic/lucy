@@ -30,7 +30,7 @@ public class Lucy::Analysis::CaseFolder
 
     Normalizer *normalizer;
 
-    inert incremented CaseFolder*
+    public inert incremented CaseFolder*
     new();
 
     /** Constructor.  Takes no arguments.

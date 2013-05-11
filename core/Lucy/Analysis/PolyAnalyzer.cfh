@@ -52,7 +52,7 @@ public class Lucy::Analysis::PolyAnalyzer
 
     VArray  *analyzers;
 
-    inert incremented PolyAnalyzer*
+    public inert incremented PolyAnalyzer*
     new(const CharBuf *language = NULL, VArray *analyzers = NULL);
 
     /**

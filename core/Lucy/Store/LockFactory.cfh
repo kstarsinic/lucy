@@ -30,7 +30,7 @@ public class Lucy::Store::LockFactory cnick LockFact
     Folder  *folder;
     CharBuf *host;
 
-    inert incremented LockFactory*
+    public inert incremented LockFactory*
     new(Folder *folder, const CharBuf *host);
 
     /**

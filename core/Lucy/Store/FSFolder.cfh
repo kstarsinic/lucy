@@ -24,7 +24,7 @@ parcel Lucy;
 
 public class Lucy::Store::FSFolder inherits Lucy::Store::Folder {
 
-    inert incremented FSFolder*
+    public inert incremented FSFolder*
     new(const CharBuf *path);
 
     /**
