@@ -24,7 +24,7 @@ parcel Lucy;
  * this behavior can be changed by overridding Make_Key(), e.g. to implement
  * efficient hash sets.
  */
-class Clownfish::Hash inherits Clownfish::Obj {
+public class Clownfish::Hash inherits Clownfish::Obj {
 
     void          *entries;
     uint32_t       capacity;
@@ -35,7 +35,7 @@ class Clownfish::Hash inherits Clownfish::Obj {
     inert void
     init_class();
 
-    inert incremented Hash*
+    public inert incremented Hash*
     new(uint32_t capacity = 0);
 
     /**
@@ -47,16 +47,16 @@ class Clownfish::Hash inherits Clownfish::Obj {
 
     /** Empty the hash of all key-value pairs.
      */
-    void
+    public void
     Clear(Hash *self);
 
     /** Store a key-value pair.  If <code>key</code> is not already present,
      * Make_Key() will be called to manufacture the internally used key.
      */
-    void
+    public void
     Store(Hash *self, Obj *key, decremented Obj *value);
 
-    void
+    public void
     Store_Str(Hash *self, const char *str, size_t len,
               decremented Obj *value);
 
@@ -64,10 +64,10 @@ class Clownfish::Hash inherits Clownfish::Obj {
      *
      * @return the value, or NULL if <code>key</code> is not present.
      */
-    nullable Obj*
+    public nullable Obj*
     Fetch(Hash *self, const Obj *key);
 
-    nullable Obj*
+    public nullable Obj*
     Fetch_Str(Hash *self, const char *key, size_t key_len);
 
     /** Attempt to delete a key-value pair from the hash.
@@ -75,17 +75,17 @@ class Clownfish::Hash inherits Clownfish::Obj {
      * @return the value if <code>key</code> exists and thus deletion
      * succeeds; otherwise NULL.
      */
-    incremented nullable Obj*
+    public incremented nullable Obj*
     Delete(Hash *self, const Obj *key);
 
-    incremented nullable Obj*
+    public incremented nullable Obj*
     Delete_Str(Hash *self, const char *key, size_t key_ley);
 
     /** Prepare to iterate over all the key-value pairs in the hash.
      *
      * @return the number of pairs which will be iterated over.
      */
-    uint32_t
+    public uint32_t
     Iterate(Hash *self);
 
     /** Retrieve the next key-value pair from the hash, setting the supplied
@@ -94,23 +94,23 @@ class Clownfish::Hash inherits Clownfish::Obj {
      * @return true while iterating, false when the iterator has been
      * exhausted.
      */
-    bool
+    public bool
     Next(Hash *self, Obj **key, Obj **value);
 
     /** Search for a key which Equals the key supplied, and return the key
      * rather than its value.
      */
-    nullable Obj*
+    public nullable Obj*
     Find_Key(Hash *self, const Obj *key, int32_t hash_sum);
 
     /** Return an VArray of pointers to the hash's keys.
      */
-    incremented VArray*
+    public incremented VArray*
     Keys(Hash *self);
 
     /** Return an VArray of pointers to the hash's values.
      */
-    incremented VArray*
+    public incremented VArray*
     Values(Hash *self);
 
     /** Create a key to be stored within the hash entry.  Implementations must

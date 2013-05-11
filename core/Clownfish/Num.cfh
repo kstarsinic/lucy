@@ -58,7 +58,7 @@ abstract class Clownfish::IntNum inherits Clownfish::Num {
 
 /** Single precision floating point number.
  */
-class Clownfish::Float32 inherits Clownfish::FloatNum {
+public class Clownfish::Float32 inherits Clownfish::FloatNum {
 
     float value;
 
@@ -68,13 +68,13 @@ class Clownfish::Float32 inherits Clownfish::FloatNum {
     inert Float32*
     init(Float32* self, float value);
 
-    inert Float32*
+    public inert Float32*
     new(float value);
 
-    void
+    public void
     Set_Value(Float32 *self, float value);
 
-    float
+    public float
     Get_Value(Float32 *self);
 
     public int64_t
@@ -101,7 +101,7 @@ class Clownfish::Float32 inherits Clownfish::FloatNum {
 
 /** Double precision floating point number.
  */
-class Clownfish::Float64 inherits Clownfish::FloatNum {
+public class Clownfish::Float64 inherits Clownfish::FloatNum {
 
     double value;
 
@@ -111,13 +111,13 @@ class Clownfish::Float64 inherits Clownfish::FloatNum {
     inert Float64*
     init(Float64* self, double value);
 
-    inert Float64*
+    public inert Float64*
     new(double value);
 
-    void
+    public void
     Set_Value(Float64 *self, double value);
 
-    double
+    public double
     Get_Value(Float64 *self);
 
     public int64_t
@@ -144,7 +144,7 @@ class Clownfish::Float64 inherits Clownfish::FloatNum {
 
 /** 32-bit signed integer.
  */
-class Clownfish::Integer32 cnick Int32
+public class Clownfish::Integer32 cnick Int32
     inherits Clownfish::IntNum {
 
     int32_t value;
@@ -155,13 +155,13 @@ class Clownfish::Integer32 cnick Int32
     inert Integer32*
     init(Integer32* self, int32_t value);
 
-    inert Integer32*
+    public inert Integer32*
     new(int32_t value);
 
-    void
+    public void
     Set_Value(Integer32 *self, int32_t value);
 
-    int32_t
+    public int32_t
     Get_Value(Integer32 *self);
 
     public int64_t
@@ -189,7 +189,7 @@ class Clownfish::Integer32 cnick Int32
 /**
  * 64-bit signed integer.
  */
-class Clownfish::Integer64 cnick Int64
+public class Clownfish::Integer64 cnick Int64
     inherits Clownfish::IntNum {
 
     int64_t value;
@@ -200,13 +200,13 @@ class Clownfish::Integer64 cnick Int64
     inert Integer64*
     init(Integer64* self, int64_t value);
 
-    inert Integer64*
+    public inert Integer64*
     new(int64_t value);
 
-    void
+    public void
     Set_Value(Integer64 *self, int64_t value);
 
-    int64_t
+    public int64_t
     Get_Value(Integer64 *self);
 
     public int64_t
@@ -241,7 +241,7 @@ class Clownfish::Integer64 cnick Int64
  * There are only two singleton instances of this class: CFISH_TRUE and
  * CFISH_FALSE.
  */
-class Clownfish::BoolNum cnick Bool inherits Clownfish::IntNum {
+public class Clownfish::BoolNum cnick Bool inherits Clownfish::IntNum {
     bool value;
     CharBuf *string;
 
@@ -254,13 +254,13 @@ class Clownfish::BoolNum cnick Bool inherits Clownfish::IntNum {
     /** Return either CFISH_TRUE or CFISH_FALSE depending on the supplied
      * value.
      */
-    inert BoolNum*
+    public inert BoolNum*
     singleton(bool value);
 
     public void
     Destroy(BoolNum *self);
 
-    bool
+    public bool
     Get_Value(BoolNum *self);
 
     public int64_t

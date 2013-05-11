@@ -23,7 +23,7 @@ parcel Lucy;
  * behavior of VTables.)
  */
 
-class Clownfish::VTable inherits Clownfish::Obj {
+public class Clownfish::VTable inherits Clownfish::Obj {
 
     VTable            *parent;
     CharBuf           *name;
@@ -98,7 +98,7 @@ class Clownfish::VTable inherits Clownfish::Obj {
      * assign its vtable and give it an initial refcount of 1.  The caller is
      * responsible for initialization.
      */
-    Obj*
+    public Obj*
     Make_Obj(VTable *self);
 
     /** Take a raw memory allocation which is presumed to be of adequate size,
@@ -118,10 +118,10 @@ class Clownfish::VTable inherits Clownfish::Obj {
     Obj*
     Foster_Obj(VTable *self, void *host_obj);
 
-    CharBuf*
+    public CharBuf*
     Get_Name(VTable *self);
 
-    VTable*
+    public VTable*
     Get_Parent(VTable *self);
 
     size_t
