@@ -26,6 +26,7 @@
 #define CFC_NEED_BASE_STRUCT_DEF
 #include "CFCBase.h"
 #include "CFCType.h"
+#include "CFCClass.h"
 #include "CFCParcel.h"
 #include "CFCSymbol.h"
 #include "CFCUtil.h"
@@ -92,15 +93,8 @@ CFCType_init(CFCType *self, int flags, struct CFCParcel *parcel,
     self->width       = 0;
     self->array       = NULL;
     self->child       = NULL;
-    if (flags & CFCTYPE_OBJECT) {
-        self->vtable_var = CFCUtil_strdup(specifier);
-        for (int i = 0; self->vtable_var[i] != 0; i++) {
-            self->vtable_var[i] = toupper(self->vtable_var[i]);
-        }
-    }
-    else {
-        self->vtable_var  = NULL;
-    }
+    self->vtable_var  = NULL;
+
     return self;
 }
 
@@ -216,14 +210,8 @@ CFCType_new_object(int flags, CFCParcel *parcel, const char *specifier,
         flags |= CFCTYPE_STRING_TYPE;
     }
 
-    char full_specifier[MAX_SPECIFIER_LEN + 1];
     char small_specifier[MAX_SPECIFIER_LEN + 1];
     if (isupper(*specifier)) {
-        const char *prefix = CFCParcel_get_prefix(parcel);
-        if (strlen(prefix) + strlen(specifier) > MAX_SPECIFIER_LEN) {
-            CFCUtil_die("Specifier and/or parcel prefix too long");
-        }
-        sprintf(full_specifier, "%s%s", prefix, specifier);
         strcpy(small_specifier, specifier);
     }
     else if (!isalpha(*specifier)) {
@@ -243,21 +231,11 @@ CFCType_new_object(int flags, CFCParcel *parcel, const char *specifier,
             }
             probe++;
         }
-        strcpy(full_specifier, specifier);
         strcpy(small_specifier, probe);
     }
 
     if (!CFCSymbol_validate_class_name_component(small_specifier)) {
         CFCUtil_die("Invalid specifier: '%s'", specifier);
-    }
-
-    // Cache C representation.
-    char c_string[MAX_SPECIFIER_LEN + 10];
-    if (flags & CFCTYPE_CONST) {
-        sprintf(c_string, "const %s*", full_specifier);
-    }
-    else {
-        sprintf(c_string, "%s*", full_specifier);
     }
 
     int acceptable_flags = CFCTYPE_OBJECT
@@ -268,7 +246,7 @@ CFCType_new_object(int flags, CFCParcel *parcel, const char *specifier,
                            | CFCTYPE_DECREMENTED;
     S_check_flags(flags, acceptable_flags, "Object");
 
-    return CFCType_new(flags, parcel, full_specifier, 1, c_string);
+    return CFCType_new(flags, parcel, specifier, 1, NULL);
 }
 
 #define MAX_COMPOSITE_LEN 256
@@ -282,22 +260,8 @@ CFCType_new_composite(int flags, CFCType *child, int indirection,
     flags |= CFCTYPE_COMPOSITE;
     S_check_flags(flags, CFCTYPE_COMPOSITE | CFCTYPE_NULLABLE, "Composite");
 
-    // Cache C representation.
-    // NOTE: Array postfixes are NOT included.
-    const char   *child_c_string = CFCType_to_c(child);
-    size_t        child_c_len    = strlen(child_c_string);
-    size_t        amount         = child_c_len + indirection;
-    if (amount > MAX_COMPOSITE_LEN) {
-        CFCUtil_die("C representation too long");
-    }
-    char c_string[MAX_COMPOSITE_LEN + 1];
-    strcpy(c_string, child_c_string);
-    for (int i = 0; i < indirection; i++) {
-        strncat(c_string, "*", 1);
-    }
-
     CFCType *self = CFCType_new(flags, NULL, CFCType_get_specifier(child),
-                                indirection, c_string);
+                                indirection, NULL);
     self->child = (CFCType*)CFCBase_incref((CFCBase*)child);
 
     // Record array spec.
@@ -332,6 +296,83 @@ CFCType_new_arbitrary(CFCParcel *parcel, const char *specifier) {
     }
 
     return CFCType_new(CFCTYPE_ARBITRARY, parcel, specifier, 0, specifier);
+}
+
+void
+CFCType_resolve(CFCType *self, CFCClass **classes) {
+    if (CFCType_is_composite(self)) {
+        CFCType_resolve(self->child, classes);
+
+        // Cache C representation.
+        // NOTE: Array postfixes are NOT included.
+        const char   *child_c_string = CFCType_to_c(self->child);
+        size_t        child_c_len    = strlen(child_c_string);
+        size_t        amount         = child_c_len + self->indirection;
+        if (amount > MAX_COMPOSITE_LEN) {
+            CFCUtil_die("C representation too long");
+        }
+        char c_string[MAX_COMPOSITE_LEN + 1];
+        strcpy(c_string, child_c_string);
+        for (int i = 0; i < self->indirection; i++) {
+            strncat(c_string, "*", 1);
+        }
+        FREEMEM(self->c_string);
+        self->c_string = CFCUtil_strdup(c_string);
+
+        return;
+    }
+    if (!CFCType_is_object(self)) {
+        return;
+    }
+
+    if (isupper(self->specifier[0])) {
+        // Try to find class from class list.
+        const char *specifier = self->specifier;
+        CFCClass   *klass     = NULL;
+
+        for (size_t i = 0; classes[i]; ++i) {
+            CFCClass   *maybe_class = classes[i];
+            const char *struct_sym  = CFCClass_get_struct_sym(maybe_class);
+
+            if (strcmp(specifier, struct_sym) == 0) {
+                if (klass) {
+                    CFCUtil_die("Type '%s' is ambigious", specifier);
+                }
+                klass = maybe_class;
+            }
+        }
+
+        if (!klass) {
+            CFCUtil_die("No class found for type '%s'", specifier);
+        }
+
+        // Create actual specifier with prefix.
+        const char *prefix = CFCClass_get_prefix(klass);
+        if (strlen(prefix) + strlen(specifier) > MAX_SPECIFIER_LEN) {
+            CFCUtil_die("Specifier and/or parcel prefix too long");
+        }
+        char full_specifier[MAX_SPECIFIER_LEN + 1];
+        sprintf(full_specifier, "%s%s", prefix, specifier);
+        FREEMEM(self->specifier);
+        self->specifier = CFCUtil_strdup(full_specifier);
+    }
+
+    // Cache C representation.
+    char c_string[MAX_SPECIFIER_LEN + 10];
+    if (CFCType_const(self)) {
+        sprintf(c_string, "const %s*", self->specifier);
+    }
+    else {
+        sprintf(c_string, "%s*", self->specifier);
+    }
+    FREEMEM(self->c_string);
+    self->c_string = CFCUtil_strdup(c_string);
+
+    // Cache name of VTable variable.
+    self->vtable_var = CFCUtil_strdup(self->specifier);
+    for (int i = 0; self->vtable_var[i] != 0; i++) {
+        self->vtable_var[i] = toupper(self->vtable_var[i]);
+    }
 }
 
 void

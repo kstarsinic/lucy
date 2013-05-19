@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 typedef struct CFCType CFCType;
+struct CFCClass;
 struct CFCParcel;
 
 #define CFCTYPE_CONST       0x00000001
@@ -172,6 +173,11 @@ CFCType_new_va_list(void);
  */
 CFCType*
 CFCType_new_arbitrary(struct CFCParcel *parcel, const char *specifier);
+
+/** Find the actual class of an object variable without prefix.
+ */
+void
+CFCType_resolve(CFCType *self, struct CFCClass **classes);
 
 void
 CFCType_destroy(CFCType *self);

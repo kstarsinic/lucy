@@ -55,8 +55,17 @@ CFCParamList_init(CFCParamList *self, int variadic) {
     self->num_vars  = 0;
     self->variables = (CFCVariable**)CALLOCATE(1, sizeof(void*));
     self->values    = (char**)CALLOCATE(1, sizeof(char*));
-    S_generate_c_strings(self);
+    self->c_string  = CFCUtil_strdup("");
+    self->name_list = CFCUtil_strdup("");
     return self;
+}
+
+void
+CFCParamList_resolve_types(CFCParamList *self, struct CFCClass **classes) {
+    for (size_t i = 0; self->variables[i]; ++i) {
+        CFCVariable_resolve_type(self->variables[i], classes);
+    }
+    S_generate_c_strings(self);
 }
 
 void
@@ -72,8 +81,6 @@ CFCParamList_add_param(CFCParamList *self, CFCVariable *variable,
     self->values[self->num_vars - 1] = value ? CFCUtil_strdup(value) : NULL;
     self->variables[self->num_vars] = NULL;
     self->values[self->num_vars] = NULL;
-
-    S_generate_c_strings(self);
 }
 
 void
@@ -153,7 +160,6 @@ CFCParamList_num_vars(CFCParamList *self) {
 void
 CFCParamList_set_variadic(CFCParamList *self, int variadic) {
     self->variadic = !!variadic;
-    S_generate_c_strings(self);
 }
 
 int

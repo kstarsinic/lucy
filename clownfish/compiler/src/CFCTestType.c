@@ -16,11 +16,17 @@
 
 #define CFC_USE_TEST_MACROS
 #include "CFCBase.h"
+#include "CFCClass.h"
 #include "CFCParcel.h"
 #include "CFCParser.h"
 #include "CFCTest.h"
 #include "CFCType.h"
 #include "CFCUtil.h"
+
+#ifndef true
+  #define true 1
+  #define false 0
+#endif
 
 static void
 S_run_tests(CFCTest *test);
@@ -54,7 +60,7 @@ S_run_composite_tests(CFCTest *test);
 
 const CFCTestBatch CFCTEST_BATCH_TYPE = {
     "Clownfish::CFC::Model::Type",
-    353,
+    361,
     S_run_tests
 };
 
@@ -287,11 +293,17 @@ S_run_object_tests(CFCTest *test) {
         for (int i = 0; i < 4; ++i) {
             const char *specifier = specifiers[i];
 
+            char *class_code = CFCUtil_sprintf("class %s {}", specifier);
+            CFCClass *klass = CFCTest_parse_class(test, parser, class_code);
+            CFCClass *class_list[2] = { klass, NULL };
+            FREEMEM(class_code);
+
             static const char *prefixes[2] = { "", "neato_" };
             char *expect = CFCUtil_sprintf("neato_%s", specifier);
             for (int j = 0; j < 2; ++j) {
                 char *src = CFCUtil_sprintf("%s%s*", prefixes[j], specifier);
                 CFCType *type = CFCTest_parse_type(test, parser, src);
+                CFCType_resolve(type, class_list);
                 STR_EQ(test, CFCType_get_specifier(type), expect,
                        "object_type_specifier: %s", src);
                 OK(test, CFCType_is_object(type), "%s is_object", src);
@@ -312,16 +324,26 @@ S_run_object_tests(CFCTest *test) {
                 FREEMEM(src);
                 CFCBase_decref((CFCBase*)type);
             }
+
+            CFCBase_decref((CFCBase*)klass);
+            CFCClass_clear_registry();
         }
 
         CFCBase_decref((CFCBase*)neato_parcel);
         CFCBase_decref((CFCBase*)parser);
     }
 
+    CFCParcel *neato_parcel = CFCParcel_new("Neato", NULL, NULL);
+    CFCClass *foo_class
+        = CFCClass_create(neato_parcel, NULL, "Foo", NULL, NULL, NULL, NULL,
+                          NULL, false, false);
+    CFCClass *class_list[2] = { foo_class, NULL };
     CFCType *foo = CFCType_new_object(0, NULL, "Foo", 1);
+    CFCType_resolve(foo, class_list);
 
     {
         CFCType *another_foo = CFCType_new_object(0, NULL, "Foo", 1);
+        CFCType_resolve(another_foo, class_list);
         OK(test, CFCType_equals(foo, another_foo), "equals");
         CFCBase_decref((CFCBase*)another_foo);
     }
@@ -335,13 +357,18 @@ S_run_object_tests(CFCTest *test) {
 
     {
         CFCParcel *foreign_parcel = CFCParcel_new("Foreign", NULL, NULL);
-        CFCParcel_register(foreign_parcel);
+        CFCClass *foreign_foo_class
+            = CFCClass_create(foreign_parcel, NULL, "Foo", NULL, NULL, NULL,
+                              NULL, NULL, false, false);
+        CFCClass *foreign_class_list[2] = { foreign_foo_class, NULL };
         CFCType *foreign_foo = CFCType_new_object(0, foreign_parcel, "Foo", 1);
+        CFCType_resolve(foreign_foo, foreign_class_list);
         OK(test, !CFCType_equals(foo, foreign_foo),
            "different parcel spoils equals");
         STR_EQ(test, CFCType_get_specifier(foreign_foo), "foreign_Foo",
                "prepend parcel prefix to specifier");
         CFCBase_decref((CFCBase*)foreign_parcel);
+        CFCBase_decref((CFCBase*)foreign_foo_class);
         CFCBase_decref((CFCBase*)foreign_foo);
     }
 
@@ -366,8 +393,10 @@ S_run_object_tests(CFCTest *test) {
         CFCBase_decref((CFCBase*)string_type);
     }
 
+    CFCBase_decref((CFCBase*)foo_class);
     CFCBase_decref((CFCBase*)foo);
 
+    CFCClass_clear_registry();
     CFCParcel_reap_singletons();
 }
 
@@ -485,7 +514,9 @@ S_run_composite_tests(CFCTest *test) {
     }
 
     {
+        CFCClass *class_list[1] = { NULL };
         CFCType *foo_array = CFCTest_parse_type(test, parser, "foo_t[]");
+        CFCType_resolve(foo_array, class_list);
         STR_EQ(test, CFCType_get_array(foo_array), "[]", "get_array");
         STR_EQ(test, CFCType_to_c(foo_array), "foo_t",
                "array subscripts not included by to_c");

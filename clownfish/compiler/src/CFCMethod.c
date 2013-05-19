@@ -105,12 +105,30 @@ CFCMethod_init(CFCMethod *self, CFCParcel *parcel, const char *exposure,
                      docucomment, false);
     FREEMEM(micro_sym);
 
+    self->macro_sym     = CFCUtil_strdup(macro_sym);
+    self->is_final      = is_final;
+    self->is_abstract   = is_abstract;
+
+    self->full_override_sym = NULL;
+
+    // Assume that this method is novel until we discover when applying
+    // inheritance that it overrides another.
+    self->is_novel = true;
+
+    return self;
+}
+
+void
+CFCMethod_resolve_types(CFCMethod *self, struct CFCClass **classes) {
+    CFCFunction_resolve_types((CFCFunction*)self, classes);
+
     // Verify that the first element in the arg list is a self.
-    CFCVariable **args = CFCParamList_get_variables(param_list);
+    CFCVariable **args = CFCParamList_get_variables(self->function.param_list);
     if (!args[0]) { CFCUtil_die("Missing 'self' argument"); }
     CFCType *type = CFCVariable_get_type(args[0]);
     const char *specifier = CFCType_get_specifier(type);
     const char *prefix    = CFCMethod_get_prefix(self);
+    const char *class_name = CFCMethod_get_class_name(self);
     const char *last_colon = strrchr(class_name, ':');
     const char *struct_sym = last_colon ? last_colon + 1 : class_name;
     char *wanted = CFCUtil_sprintf("%s%s", prefix, struct_sym);
@@ -121,19 +139,9 @@ CFCMethod_init(CFCMethod *self, CFCParcel *parcel, const char *exposure,
                     class_name, specifier);
     }
 
-    self->macro_sym     = CFCUtil_strdup(macro_sym);
-    self->is_final      = is_final;
-    self->is_abstract   = is_abstract;
-
     // Derive more symbols.
     const char *full_func_sym = CFCMethod_implementing_func_sym(self);
     self->full_override_sym = CFCUtil_sprintf("%s_OVERRIDE", full_func_sym);
-
-    // Assume that this method is novel until we discover when applying
-    // inheritance that it overrides another.
-    self->is_novel = true;
-
-    return self;
 }
 
 void
@@ -220,6 +228,9 @@ CFCMethod_finalize(CFCMethod *self) {
                         self->function.param_list,
                         self->function.docucomment, true,
                         self->is_abstract);
+    // Hack
+    CFCClass *dummy_class = NULL;
+    CFCMethod_resolve_types(finalized, &dummy_class);
     return finalized;
 }
 
