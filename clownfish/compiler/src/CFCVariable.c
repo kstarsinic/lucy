@@ -74,18 +74,30 @@ CFCVariable_init(CFCVariable *self, struct CFCParcel *parcel,
     self->type = (CFCType*)CFCBase_incref((CFCBase*)type);
     self->inert = !!inert;
 
-    // Cache various C string representations.
+    self->local_c   = NULL;
+    self->local_dec = NULL;
+    self->global_c  = NULL;
+
+    return self;
+}
+
+// Cache various C string representations. Will be called after type has
+// been resolved.
+void
+CFCVariable_resolve_type(CFCVariable *self, struct CFCClass **classes) {
+    CFCType *type = self->type;
+    CFCType_resolve(type, classes);
+
     const char *type_str = CFCType_to_c(type);
     const char *postfix  = "";
     if (CFCType_is_composite(type) && CFCType_get_array(type) != NULL) {
         postfix = CFCType_get_array(type);
     }
+    const char *micro_sym = CFCVariable_micro_sym(self);
     self->local_c = CFCUtil_sprintf("%s %s%s", type_str, micro_sym, postfix);
     self->local_dec = CFCUtil_sprintf("%s;", self->local_c);
     const char *full_sym = CFCVariable_full_sym(self);
     self->global_c = CFCUtil_sprintf("%s %s%s", type_str, full_sym, postfix);
-
-    return self;
 }
 
 void
