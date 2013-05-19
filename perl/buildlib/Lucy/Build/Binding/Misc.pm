@@ -46,7 +46,7 @@ to_clownfish(sv)
     SV *sv;
 CODE:
 {
-    lucy_Obj *obj = XSBind_perl_to_cfish(sv);
+    cfish_Obj *obj = XSBind_perl_to_cfish(sv);
     RETVAL = CFISH_OBJ_TO_SV_NOINC(obj);
 }
 OUTPUT: RETVAL
@@ -58,7 +58,7 @@ CODE:
 {
     if (sv_isobject(sv) && sv_derived_from(sv, "Clownfish::Obj")) {
         IV tmp = SvIV(SvRV(sv));
-        lucy_Obj* obj = INT2PTR(lucy_Obj*, tmp);
+        cfish_Obj* obj = INT2PTR(cfish_Obj*, tmp);
         RETVAL = XSBind_cfish_to_perl(obj);
     }
     else {
@@ -85,9 +85,9 @@ bool
 run_tests(package)
     char *package;
 CODE:
-    lucy_CharBuf *class_name = lucy_CB_newf("%s", package);
-    lucy_TestFormatter *formatter
-        = (lucy_TestFormatter*)lucy_TestFormatterTAP_new();
+    cfish_CharBuf *class_name = cfish_CB_newf("%s", package);
+    cfish_TestFormatter *formatter
+        = (cfish_TestFormatter*)cfish_TestFormatterTAP_new();
     bool result = lucy_Test_run_batch(class_name, formatter);
     CFISH_DECREF(class_name);
     CFISH_DECREF(formatter);
@@ -129,8 +129,8 @@ CODE:
 {
     void *address = Lucy_BBSortEx_Fetch(self);
     if (address) {
-        RETVAL = XSBind_cfish_to_perl(*(lucy_Obj**)address);
-        CFISH_DECREF(*(lucy_Obj**)address);
+        RETVAL = XSBind_cfish_to_perl(*(cfish_Obj**)address);
+        CFISH_DECREF(*(cfish_Obj**)address);
     }
     else {
         RETVAL = newSV(0);
@@ -145,7 +145,7 @@ CODE:
 {
     void *address = Lucy_BBSortEx_Peek(self);
     if (address) {
-        RETVAL = XSBind_cfish_to_perl(*(lucy_Obj**)address);
+        RETVAL = XSBind_cfish_to_perl(*(cfish_Obj**)address);
     }
     else {
         RETVAL = newSV(0);
@@ -156,7 +156,7 @@ OUTPUT: RETVAL
 void
 feed(self, bb)
     lucy_BBSortEx *self;
-    lucy_ByteBuf *bb;
+    cfish_ByteBuf *bb;
 CODE:
     CFISH_INCREF(bb);
     Lucy_BBSortEx_Feed(self, &bb);
