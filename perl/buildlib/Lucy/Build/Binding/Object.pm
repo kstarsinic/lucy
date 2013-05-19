@@ -92,20 +92,20 @@ CODE:
 {
     STRLEN size;
     char *ptr = SvPV(sv, size);
-    lucy_ByteBuf *self = (lucy_ByteBuf*)XSBind_new_blank_obj(either_sv);
-    lucy_BB_init(self, size);
-    Lucy_BB_Mimic_Bytes(self, ptr, size);
+    cfish_ByteBuf *self = (cfish_ByteBuf*)XSBind_new_blank_obj(either_sv);
+    cfish_BB_init(self, size);
+    Cfish_BB_Mimic_Bytes(self, ptr, size);
     RETVAL = CFISH_OBJ_TO_SV_NOINC(self);
 }
 OUTPUT: RETVAL
 
 SV*
 _deserialize(self, instream)
-    lucy_ByteBuf *self;
+    cfish_ByteBuf *self;
     lucy_InStream *instream;
 CODE:
-    lucy_ByteBuf *thawed = Lucy_BB_Deserialize(self, instream);
-    RETVAL = (SV*)Lucy_BB_To_Host(thawed);
+    cfish_ByteBuf *thawed = Cfish_BB_Deserialize(self, instream);
+    RETVAL = (SV*)Cfish_BB_To_Host(thawed);
 OUTPUT: RETVAL
 END_XS_CODE
 
@@ -131,32 +131,32 @@ CODE:
 {
     STRLEN size;
     char *ptr = SvPVutf8(sv, size);
-    lucy_CharBuf *self = (lucy_CharBuf*)XSBind_new_blank_obj(either_sv);
-    lucy_CB_init(self, size);
-    Lucy_CB_Cat_Trusted_Str(self, ptr, size);
+    cfish_CharBuf *self = (cfish_CharBuf*)XSBind_new_blank_obj(either_sv);
+    cfish_CB_init(self, size);
+    Cfish_CB_Cat_Trusted_Str(self, ptr, size);
     RETVAL = CFISH_OBJ_TO_SV_NOINC(self);
 }
 OUTPUT: RETVAL
 
 SV*
 _clone(self)
-    lucy_CharBuf *self;
+    cfish_CharBuf *self;
 CODE:
-    RETVAL = CFISH_OBJ_TO_SV_NOINC(lucy_CB_clone(self));
+    RETVAL = CFISH_OBJ_TO_SV_NOINC(cfish_CB_clone(self));
 OUTPUT: RETVAL
 
 SV*
 _deserialize(self, instream)
-    lucy_CharBuf *self;
+    cfish_CharBuf *self;
     lucy_InStream *instream;
 CODE:
-    lucy_CharBuf *thawed = Lucy_CB_Deserialize(self, instream);
-    RETVAL = (SV*)Lucy_CB_To_Host(thawed);
+    cfish_CharBuf *thawed = Cfish_CB_Deserialize(self, instream);
+    RETVAL = (SV*)Cfish_CB_To_Host(thawed);
 OUTPUT: RETVAL
 
 SV*
 to_perl(self)
-    lucy_CharBuf *self;
+    cfish_CharBuf *self;
 CODE:
     RETVAL = XSBind_cb_to_sv(self);
 OUTPUT: RETVAL
@@ -171,8 +171,8 @@ CODE:
 {
     STRLEN size;
     char *ptr = SvPVutf8(sv, size);
-    lucy_ViewCharBuf *self
-        = lucy_ViewCB_new_from_trusted_utf8(ptr, size);
+    cfish_ViewCharBuf *self
+        = cfish_ViewCB_new_from_trusted_utf8(ptr, size);
     CHY_UNUSED_VAR(unused);
     RETVAL = CFISH_OBJ_TO_SV_NOINC(self);
 }
@@ -249,43 +249,43 @@ MODULE =  Lucy    PACKAGE = Clownfish::Hash
 
 SV*
 _deserialize(self, instream)
-    lucy_Hash *self;
+    cfish_Hash *self;
     lucy_InStream *instream;
 CODE:
-    lucy_Hash *thawed = Lucy_Hash_Deserialize(self, instream);
-    RETVAL = (SV*)Lucy_Hash_To_Host(thawed);
+    cfish_Hash *thawed = Cfish_Hash_Deserialize(self, instream);
+    RETVAL = (SV*)Cfish_Hash_To_Host(thawed);
 OUTPUT: RETVAL
 
 SV*
 _fetch(self, key)
-    lucy_Hash *self;
-    const lucy_CharBuf *key;
+    cfish_Hash *self;
+    const cfish_CharBuf *key;
 CODE:
-    RETVAL = CFISH_OBJ_TO_SV(lucy_Hash_fetch(self, (lucy_Obj*)key));
+    RETVAL = CFISH_OBJ_TO_SV(cfish_Hash_fetch(self, (cfish_Obj*)key));
 OUTPUT: RETVAL
 
 void
 store(self, key, value);
-    lucy_Hash          *self;
-    const lucy_CharBuf *key;
-    lucy_Obj           *value;
+    cfish_Hash          *self;
+    const cfish_CharBuf *key;
+    cfish_Obj           *value;
 PPCODE:
 {
     if (value) { CFISH_INCREF(value); }
-    lucy_Hash_store(self, (lucy_Obj*)key, value);
+    cfish_Hash_store(self, (cfish_Obj*)key, value);
 }
 
 void
 next(self)
-    lucy_Hash *self;
+    cfish_Hash *self;
 PPCODE:
 {
-    lucy_Obj *key;
-    lucy_Obj *val;
+    cfish_Obj *key;
+    cfish_Obj *val;
 
-    if (Lucy_Hash_Next(self, &key, &val)) {
-        SV *key_sv = (SV*)Lucy_Obj_To_Host(key);
-        SV *val_sv = (SV*)Lucy_Obj_To_Host(val);
+    if (Cfish_Hash_Next(self, &key, &val)) {
+        SV *key_sv = (SV*)Cfish_Obj_To_Host(key);
+        SV *val_sv = (SV*)Cfish_Obj_To_Host(val);
 
         XPUSHs(sv_2mortal(key_sv));
         XPUSHs(sv_2mortal(val_sv));
@@ -346,7 +346,7 @@ CODE:
         lucy_I32Arr_init(self, ints, size);
     }
     else {
-        THROW(LUCY_ERR, "Required param 'ints' isn't an arrayref");
+        THROW(CFISH_ERR, "Required param 'ints' isn't an arrayref");
     }
 
     RETVAL = CFISH_OBJ_TO_SV_NOINC(self);
@@ -401,8 +401,8 @@ new(either_sv, value)
     float  value;
 CODE:
 {
-    lucy_Float32 *self = (lucy_Float32*)XSBind_new_blank_obj(either_sv);
-    lucy_Float32_init(self, value);
+    cfish_Float32 *self = (cfish_Float32*)XSBind_new_blank_obj(either_sv);
+    cfish_Float32_init(self, value);
     RETVAL = CFISH_OBJ_TO_SV_NOINC(self);
 }
 OUTPUT: RETVAL
@@ -428,8 +428,8 @@ new(either_sv, value)
     double  value;
 CODE:
 {
-    lucy_Float64 *self = (lucy_Float64*)XSBind_new_blank_obj(either_sv);
-    lucy_Float64_init(self, value);
+    cfish_Float64 *self = (cfish_Float64*)XSBind_new_blank_obj(either_sv);
+    cfish_Float64_init(self, value);
     RETVAL = CFISH_OBJ_TO_SV_NOINC(self);
 }
 OUTPUT: RETVAL
@@ -550,29 +550,29 @@ MODULE = Lucy     PACKAGE = Clownfish::Obj
 
 bool
 is_a(self, class_name)
-    lucy_Obj *self;
-    const lucy_CharBuf *class_name;
+    cfish_Obj *self;
+    const cfish_CharBuf *class_name;
 CODE:
 {
-    lucy_VTable *target = lucy_VTable_fetch_vtable(class_name);
-    RETVAL = Lucy_Obj_Is_A(self, target);
+    cfish_VTable *target = cfish_VTable_fetch_vtable(class_name);
+    RETVAL = Cfish_Obj_Is_A(self, target);
 }
 OUTPUT: RETVAL
 
 void
 STORABLE_freeze(self, ...)
-    lucy_Obj *self;
+    cfish_Obj *self;
 PPCODE:
 {
     CHY_UNUSED_VAR(self);
     if (items < 2 || !SvTRUE(ST(1))) {
         SV *retval;
-        lucy_ByteBuf *serialized_bb;
+        cfish_ByteBuf *serialized_bb;
         lucy_RAMFileHandle *file_handle
             = lucy_RAMFH_open(NULL, LUCY_FH_WRITE_ONLY | LUCY_FH_CREATE, NULL);
-        lucy_OutStream *target = lucy_OutStream_open((lucy_Obj*)file_handle);
+        lucy_OutStream *target = lucy_OutStream_open((cfish_Obj*)file_handle);
 
-        Lucy_Obj_Serialize(self, target);
+        Cfish_Obj_Serialize(self, target);
 
         Lucy_OutStream_Close(target);
         serialized_bb
@@ -582,7 +582,7 @@ PPCODE:
         CFISH_DECREF(target);
 
         if (SvCUR(retval) == 0) { // Thwart Storable bug
-            THROW(LUCY_ERR, "Calling serialize produced an empty string");
+            THROW(CFISH_ERR, "Calling serialize produced an empty string");
         }
         ST(0) = sv_2mortal(retval);
         XSRETURN(1);
@@ -606,19 +606,19 @@ STORABLE_thaw(blank_obj, cloning, serialized_sv)
 PPCODE:
 {
     char *class_name = HvNAME(SvSTASH(SvRV(blank_obj)));
-    lucy_ZombieCharBuf *klass
+    cfish_ZombieCharBuf *klass
         = CFISH_ZCB_WRAP_STR(class_name, strlen(class_name));
-    lucy_VTable *vtable
-        = (lucy_VTable*)lucy_VTable_singleton((lucy_CharBuf*)klass, NULL);
+    cfish_VTable *vtable
+        = (cfish_VTable*)cfish_VTable_singleton((cfish_CharBuf*)klass, NULL);
     STRLEN len;
     char *ptr = SvPV(serialized_sv, len);
-    lucy_ViewByteBuf *contents = lucy_ViewBB_new(ptr, len);
-    lucy_RAMFile *ram_file = lucy_RAMFile_new((lucy_ByteBuf*)contents, true);
+    cfish_ViewByteBuf *contents = cfish_ViewBB_new(ptr, len);
+    lucy_RAMFile *ram_file = lucy_RAMFile_new((cfish_ByteBuf*)contents, true);
     lucy_RAMFileHandle *file_handle
         = lucy_RAMFH_open(NULL, LUCY_FH_READ_ONLY, ram_file);
-    lucy_InStream *instream = lucy_InStream_open((lucy_Obj*)file_handle);
-    lucy_Obj *self = Lucy_VTable_Foster_Obj(vtable, blank_obj);
-    lucy_Obj *deserialized = Lucy_Obj_Deserialize(self, instream);
+    lucy_InStream *instream = lucy_InStream_open((cfish_Obj*)file_handle);
+    cfish_Obj *self = Cfish_VTable_Foster_Obj(vtable, blank_obj);
+    cfish_Obj *deserialized = Cfish_Obj_Deserialize(self, instream);
 
     CHY_UNUSED_VAR(cloning);
     CFISH_DECREF(contents);
@@ -628,7 +628,7 @@ PPCODE:
 
     // Catch bad deserialize() override.
     if (deserialized != self) {
-        THROW(LUCY_ERR, "Error when deserializing obj of class %o", klass);
+        THROW(CFISH_ERR, "Error when deserializing obj of class %o", klass);
     }
 }
 END_XS_CODE
@@ -660,66 +660,66 @@ MODULE = Lucy   PACKAGE = Clownfish::VArray
 
 SV*
 shallow_copy(self)
-    lucy_VArray *self;
+    cfish_VArray *self;
 CODE:
-    RETVAL = CFISH_OBJ_TO_SV_NOINC(Lucy_VA_Shallow_Copy(self));
+    RETVAL = CFISH_OBJ_TO_SV_NOINC(Cfish_VA_Shallow_Copy(self));
 OUTPUT: RETVAL
 
 SV*
 _deserialize(self, instream)
-    lucy_VArray *self;
+    cfish_VArray *self;
     lucy_InStream *instream;
 CODE:
-    lucy_VArray *thawed = Lucy_VA_Deserialize(self, instream);
-    RETVAL = (SV*)Lucy_VA_To_Host(thawed);
+    cfish_VArray *thawed = Cfish_VA_Deserialize(self, instream);
+    RETVAL = (SV*)Cfish_VA_To_Host(thawed);
 OUTPUT: RETVAL
 
 SV*
 _clone(self)
-    lucy_VArray *self;
+    cfish_VArray *self;
 CODE:
-    RETVAL = CFISH_OBJ_TO_SV_NOINC(Lucy_VA_Clone(self));
+    RETVAL = CFISH_OBJ_TO_SV_NOINC(Cfish_VA_Clone(self));
 OUTPUT: RETVAL
 
 SV*
 shift(self)
-    lucy_VArray *self;
+    cfish_VArray *self;
 CODE:
-    RETVAL = CFISH_OBJ_TO_SV_NOINC(Lucy_VA_Shift(self));
+    RETVAL = CFISH_OBJ_TO_SV_NOINC(Cfish_VA_Shift(self));
 OUTPUT: RETVAL
 
 SV*
 pop(self)
-    lucy_VArray *self;
+    cfish_VArray *self;
 CODE:
-    RETVAL = CFISH_OBJ_TO_SV_NOINC(Lucy_VA_Pop(self));
+    RETVAL = CFISH_OBJ_TO_SV_NOINC(Cfish_VA_Pop(self));
 OUTPUT: RETVAL
 
 SV*
 delete(self, tick)
-    lucy_VArray *self;
+    cfish_VArray *self;
     uint32_t    tick;
 CODE:
-    RETVAL = CFISH_OBJ_TO_SV_NOINC(Lucy_VA_Delete(self, tick));
+    RETVAL = CFISH_OBJ_TO_SV_NOINC(Cfish_VA_Delete(self, tick));
 OUTPUT: RETVAL
 
 void
 store(self, tick, value);
-    lucy_VArray *self;
+    cfish_VArray *self;
     uint32_t     tick;
-    lucy_Obj    *value;
+    cfish_Obj    *value;
 PPCODE:
 {
     if (value) { CFISH_INCREF(value); }
-    lucy_VA_store(self, tick, value);
+    cfish_VA_store(self, tick, value);
 }
 
 SV*
 fetch(self, tick)
-    lucy_VArray *self;
+    cfish_VArray *self;
     uint32_t     tick;
 CODE:
-    RETVAL = CFISH_OBJ_TO_SV(Lucy_VA_Fetch(self, tick));
+    RETVAL = CFISH_OBJ_TO_SV(Cfish_VA_Fetch(self, tick));
 OUTPUT: RETVAL
 END_XS_CODE
 
@@ -742,10 +742,10 @@ MODULE = Lucy   PACKAGE = Clownfish::VTable
 SV*
 _get_registry()
 CODE:
-    if (lucy_VTable_registry == NULL) {
-        lucy_VTable_init_registry();
+    if (cfish_VTable_registry == NULL) {
+        cfish_VTable_init_registry();
     }
-    RETVAL = (SV*)Lucy_Obj_To_Host((lucy_Obj*)lucy_VTable_registry);
+    RETVAL = (SV*)Cfish_Obj_To_Host((cfish_Obj*)cfish_VTable_registry);
 OUTPUT: RETVAL
 
 SV*
@@ -754,28 +754,28 @@ singleton(unused_sv, ...)
 CODE:
 {
     CHY_UNUSED_VAR(unused_sv);
-    lucy_CharBuf *class_name = NULL;
-    lucy_VTable  *parent     = NULL;
+    cfish_CharBuf *class_name = NULL;
+    cfish_VTable  *parent     = NULL;
     bool args_ok
         = XSBind_allot_params(&(ST(0)), 1, items,
                               ALLOT_OBJ(&class_name, "class_name", 10, true,
-                                        LUCY_CHARBUF, alloca(cfish_ZCB_size())),
+                                        CFISH_CHARBUF, alloca(cfish_ZCB_size())),
                               ALLOT_OBJ(&parent, "parent", 6, false,
-                                        LUCY_VTABLE, NULL),
+                                        CFISH_VTABLE, NULL),
                               NULL);
     if (!args_ok) {
         CFISH_RETHROW(CFISH_INCREF(cfish_Err_get_error()));
     }
-    lucy_VTable *singleton = lucy_VTable_singleton(class_name, parent);
-    RETVAL = (SV*)Lucy_VTable_To_Host(singleton);
+    cfish_VTable *singleton = cfish_VTable_singleton(class_name, parent);
+    RETVAL = (SV*)Cfish_VTable_To_Host(singleton);
 }
 OUTPUT: RETVAL
 
 SV*
 make_obj(self)
-    lucy_VTable *self;
+    cfish_VTable *self;
 CODE:
-    lucy_Obj *blank = Lucy_VTable_Make_Obj(self);
+    cfish_Obj *blank = Cfish_VTable_Make_Obj(self);
     RETVAL = CFISH_OBJ_TO_SV_NOINC(blank);
 OUTPUT: RETVAL
 END_XS_CODE
