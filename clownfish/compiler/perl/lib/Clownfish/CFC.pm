@@ -698,7 +698,6 @@ BEGIN { XSLoader::load( 'Clownfish::CFC', '0.01' ) }
     use Clownfish::CFC::Util qw( verify_args a_isa_b );
 
     our %new_PARAMS = (
-        parcel     => undef,
         hierarchy  => undef,
         lib_dir    => undef,
         boot_class => undef,
@@ -709,10 +708,8 @@ BEGIN { XSLoader::load( 'Clownfish::CFC', '0.01' ) }
     sub new {
         my ( $either, %args ) = @_;
         verify_args( \%new_PARAMS, %args ) or confess $@;
-        $args{parcel}
-            = Clownfish::CFC::Model::Parcel->acquire( $args{parcel} );
         return _new(
-            @args{qw( parcel hierarchy lib_dir boot_class header footer )} );
+            @args{qw( hierarchy lib_dir boot_class header footer )} );
     }
 }
 
