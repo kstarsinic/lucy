@@ -1041,7 +1041,7 @@ _new(name_sv, cnick_sv, version)
 CODE:
     const char *name  = SvOK(name_sv)  ? SvPV_nolen(name_sv)  : NULL;
     const char *cnick = SvOK(cnick_sv) ? SvPV_nolen(cnick_sv) : NULL;
-    CFCParcel *self = CFCParcel_new(name, cnick, version);
+    CFCParcel *self = CFCParcel_new(name, cnick, version, false);
     RETVAL = S_cfcbase_to_perlref(self);
     CFCBase_decref((CFCBase*)self);
 OUTPUT: RETVAL
@@ -1050,7 +1050,7 @@ SV*
 _new_from_file(path)
     const char *path;
 CODE:
-    CFCParcel *self = CFCParcel_new_from_file(path);
+    CFCParcel *self = CFCParcel_new_from_file(path, false);
     RETVAL = S_cfcbase_to_perlref(self);
     CFCBase_decref((CFCBase*)self);
 OUTPUT: RETVAL
@@ -1059,7 +1059,7 @@ SV*
 _new_from_json(json)
     const char *json;
 CODE:
-    CFCParcel *self = CFCParcel_new_from_json(json);
+    CFCParcel *self = CFCParcel_new_from_json(json, false);
     RETVAL = S_cfcbase_to_perlref(self);
     CFCBase_decref((CFCBase*)self);
 OUTPUT: RETVAL
