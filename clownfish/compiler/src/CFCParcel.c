@@ -38,6 +38,10 @@ struct CFCParcel {
     char *Prefix;
     char *PREFIX;
     int is_included;
+    CFCParcel **dependent_parcels;
+    size_t num_dependent_parcels;
+    CFCParcel **extended_parcels;
+    size_t num_extended_parcels;
 };
 
 static CFCParcel *default_parcel = NULL;
@@ -216,6 +220,12 @@ CFCParcel_init(CFCParcel *self, const char *name, const char *cnick,
     // Set is_included.
     self->is_included = is_included;
 
+    // Initialize dependencies.
+    self->dependent_parcels = (CFCParcel**)CALLOCATE(1, sizeof(CFCParcel*));
+    self->num_dependent_parcels = 0;
+    self->extended_parcels = (CFCParcel**)CALLOCATE(1, sizeof(CFCParcel*));
+    self->num_extended_parcels = 0;
+
     return self;
 }
 
@@ -304,6 +314,14 @@ CFCParcel_destroy(CFCParcel *self) {
     FREEMEM(self->prefix);
     FREEMEM(self->Prefix);
     FREEMEM(self->PREFIX);
+    for (size_t i = 0; self->dependent_parcels[i]; ++i) {
+        CFCBase_decref((CFCBase*)self->dependent_parcels[i]);
+    }
+    FREEMEM(self->dependent_parcels);
+    for (size_t i = 0; self->extended_parcels[i]; ++i) {
+        CFCBase_decref((CFCBase*)self->extended_parcels[i]);
+    }
+    FREEMEM(self->extended_parcels);
     CFCBase_destroy((CFCBase*)self);
 }
 
@@ -359,6 +377,65 @@ CFCParcel_get_PREFIX(CFCParcel *self) {
 int
 CFCParcel_included(CFCParcel *self) {
     return self->is_included;
+}
+
+void
+CFCParcel_add_dependent_parcel(CFCParcel *self, CFCParcel *dependent) {
+    const char *prefix     = CFCParcel_get_prefix(self);
+    const char *dep_prefix = CFCParcel_get_prefix(dependent);
+
+    if (strcmp(prefix, dep_prefix) == 0) { return; }
+
+    for (size_t i = 0; self->dependent_parcels[i]; ++i) {
+        const char *other_prefix
+            = CFCParcel_get_prefix(self->dependent_parcels[i]);
+        if (strcmp(other_prefix, dep_prefix) == 0) { return; }
+    }
+
+    size_t num_parcels = self->num_dependent_parcels;
+    self->dependent_parcels
+        = (CFCParcel**)REALLOCATE(self->dependent_parcels,
+                                  (num_parcels + 2) * sizeof(CFCParcel*));
+    self->dependent_parcels[num_parcels]
+        = (CFCParcel*)CFCBase_incref((CFCBase*)dependent);
+    self->dependent_parcels[num_parcels+1] = NULL;
+    self->num_dependent_parcels = num_parcels + 1;
+}
+
+void
+CFCParcel_add_extended_parcel(CFCParcel *self, CFCParcel *extended) {
+    const char *prefix     = CFCParcel_get_prefix(self);
+    const char *ext_prefix = CFCParcel_get_prefix(extended);
+
+    if (strcmp(prefix, ext_prefix) == 0) { return; }
+
+    for (size_t i = 0; self->extended_parcels[i]; ++i) {
+        const char *other_prefix
+            = CFCParcel_get_prefix(self->extended_parcels[i]);
+        if (strcmp(other_prefix, ext_prefix) == 0) { return; }
+    }
+
+    size_t num_parcels = self->num_extended_parcels;
+    self->extended_parcels
+        = (CFCParcel**)REALLOCATE(self->extended_parcels,
+                                  (num_parcels + 2) * sizeof(CFCParcel*));
+    self->extended_parcels[num_parcels]
+        = (CFCParcel*)CFCBase_incref((CFCBase*)extended);
+    self->extended_parcels[num_parcels+1] = NULL;
+    self->num_extended_parcels = num_parcels + 1;
+
+    // Add to dependent parcels.
+    CFCParcel_add_dependent_parcel(self, extended);
+}
+
+CFCParcel**
+CFCParcel_dependent_parcels(CFCParcel *self) {
+    return self->dependent_parcels;
+}
+
+CFCParcel**
+CFCParcel_extended_parcels(CFCParcel *self) {
+    return self->extended_parcels;
 }
 
 /*****************************************************************************

@@ -325,11 +325,11 @@ CFCType_resolve(CFCType *self, CFCClass **classes) {
         return;
     }
 
+    CFCClass *klass = NULL;
+
     if (isupper(self->specifier[0])) {
         // Try to find class from class list.
         const char *specifier = self->specifier;
-        CFCClass   *klass     = NULL;
-
         for (size_t i = 0; classes[i]; ++i) {
             CFCClass   *maybe_class = classes[i];
             const char *struct_sym  = CFCClass_get_struct_sym(maybe_class);
@@ -355,6 +355,26 @@ CFCType_resolve(CFCType *self, CFCClass **classes) {
         sprintf(full_specifier, "%s%s", prefix, specifier);
         FREEMEM(self->specifier);
         self->specifier = CFCUtil_strdup(full_specifier);
+    }
+    else {
+        // Try to find class from class list.
+        const char *specifier = self->specifier;
+        for (size_t i = 0; classes[i]; ++i) {
+            CFCClass *maybe_class = classes[i];
+            const char *full_struct_sym
+                = CFCClass_full_struct_sym(maybe_class);
+
+            if (strcmp(specifier, full_struct_sym) == 0) {
+                klass = maybe_class;
+                break;
+            }
+        }
+    }
+
+    // Add parcel dependency.
+    if (klass) {
+        CFCParcel *class_parcel = CFCClass_get_parcel(klass);
+        CFCParcel_add_dependent_parcel(self->parcel, class_parcel);
     }
 
     // Cache C representation.
