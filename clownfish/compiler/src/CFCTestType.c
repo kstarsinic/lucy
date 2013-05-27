@@ -394,6 +394,7 @@ S_run_object_tests(CFCTest *test) {
         CFCBase_decref((CFCBase*)string_type);
     }
 
+    CFCBase_decref((CFCBase*)neato_parcel);
     CFCBase_decref((CFCBase*)foo_class);
     CFCBase_decref((CFCBase*)foo);
 

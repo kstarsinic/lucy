@@ -228,9 +228,6 @@ CFCMethod_finalize(CFCMethod *self) {
                         self->function.param_list,
                         self->function.docucomment, true,
                         self->is_abstract);
-    // Hack
-    CFCClass *dummy_class = NULL;
-    CFCMethod_resolve_types(finalized, &dummy_class);
     return finalized;
 }
 
