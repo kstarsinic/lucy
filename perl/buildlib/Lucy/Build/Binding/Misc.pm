@@ -117,7 +117,7 @@ CODE:
     cfish_CharBuf *class_name = cfish_CB_newf("%s", package);
     cfish_TestFormatter *formatter
         = (cfish_TestFormatter*)cfish_TestFormatterTAP_new();
-    bool result = lucy_Test_run_batch(class_name, formatter);
+    bool result = testlucy_Test_run_batch(class_name, formatter);
     CFISH_DECREF(class_name);
     CFISH_DECREF(formatter);
 
@@ -126,7 +126,7 @@ OUTPUT: RETVAL
 END_XS_CODE
 
     my $binding = Clownfish::CFC::Binding::Perl::Class->new(
-        parcel     => "Lucy",
+        parcel     => "TestLucy",
         class_name => "Lucy::Test",
     );
     $binding->append_xs($xs_code);
@@ -136,7 +136,7 @@ END_XS_CODE
 
 sub bind_testschema {
     my $binding = Clownfish::CFC::Binding::Perl::Class->new(
-        parcel     => "Lucy",
+        parcel     => "TestLucy",
         class_name => "Lucy::Test::TestSchema",
     );
     Clownfish::CFC::Binding::Perl::Class->register($binding);
@@ -153,10 +153,10 @@ MODULE = Lucy    PACKAGE = Lucy::Test::Util::BBSortEx
 
 SV*
 fetch(self)
-    lucy_BBSortEx *self;
+    testlucy_BBSortEx *self;
 CODE:
 {
-    void *address = Lucy_BBSortEx_Fetch(self);
+    void *address = TestLucy_BBSortEx_Fetch(self);
     if (address) {
         RETVAL = XSBind_cfish_to_perl(*(cfish_Obj**)address);
         CFISH_DECREF(*(cfish_Obj**)address);
@@ -169,10 +169,10 @@ OUTPUT: RETVAL
 
 SV*
 peek(self)
-    lucy_BBSortEx *self;
+    testlucy_BBSortEx *self;
 CODE:
 {
-    void *address = Lucy_BBSortEx_Peek(self);
+    void *address = TestLucy_BBSortEx_Peek(self);
     if (address) {
         RETVAL = XSBind_cfish_to_perl(*(cfish_Obj**)address);
     }
@@ -184,16 +184,16 @@ OUTPUT: RETVAL
 
 void
 feed(self, bb)
-    lucy_BBSortEx *self;
+    testlucy_BBSortEx *self;
     cfish_ByteBuf *bb;
 CODE:
     CFISH_INCREF(bb);
-    Lucy_BBSortEx_Feed(self, &bb);
+    TestLucy_BBSortEx_Feed(self, &bb);
 
 END_XS_CODE
 
     my $binding = Clownfish::CFC::Binding::Perl::Class->new(
-        parcel     => "Lucy",
+        parcel     => "TestLucy",
         class_name => "Lucy::Test::Util::BBSortEx",
     );
     $binding->exclude_method($_) for @hand_rolled;
