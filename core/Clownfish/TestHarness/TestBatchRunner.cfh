@@ -1,0 +1,135 @@
+/* Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+parcel Clownfish;
+
+/** Run a single test batch and collect statistics.
+ */
+class Clownfish::TestHarness::TestBatchRunner inherits Clownfish::Obj {
+    TestFormatter *formatter;
+    uint32_t       test_num;
+    uint32_t       num_planned;
+    uint32_t       num_passed;
+    uint32_t       num_failed;
+    uint32_t       num_skipped;
+
+    inert incremented TestBatchRunner*
+    new(TestFormatter *formatter);
+
+    inert TestBatchRunner*
+    init(TestBatchRunner *self, TestFormatter *formatter);
+
+    public void
+    Destroy(TestBatchRunner *self);
+
+    /** Run the test batch and print test output and diagnosis.
+     *
+     * @return true if the test batch passed.
+     */
+    bool
+    Run_Batch(TestBatchRunner *self, TestBatch *batch);
+
+    void
+    Plan(TestBatchRunner *self, TestBatch *batch, uint32_t num_planned);
+
+    /** Return the number of tests planned.
+     */
+    uint32_t
+    Get_Num_Planned(TestBatchRunner *self);
+
+    /** Return the number of tests run.
+     */
+    uint32_t
+    Get_Num_Tests(TestBatchRunner *self);
+
+    /** Return the number of failed tests.
+     */
+    uint32_t
+    Get_Num_Failed(TestBatchRunner *self);
+
+    bool
+    Test_True(TestBatchRunner *self, bool condition, const char *pattern, ...);
+
+    bool
+    Test_False(TestBatchRunner *self, bool condition, const char *pattern,
+               ...);
+
+    bool
+    Test_Int_Equals(TestBatchRunner *self, long got, long expected,
+                    const char *pattern, ...);
+
+    bool
+    Test_Float_Equals(TestBatchRunner *self, double got, double expected,
+                      const char *pattern, ...);
+
+    bool
+    Test_String_Equals(TestBatchRunner *self, const char *got,
+                       const char *expected, const char *pattern, ...);
+
+    bool
+    Pass(TestBatchRunner *self, const char *pattern, ...);
+
+    bool
+    Fail(TestBatchRunner *self, const char *pattern, ...);
+
+    void
+    Skip(TestBatchRunner *self, const char *pattern, ...);
+
+    bool
+    VTest_True(TestBatchRunner *self, bool condition, const char *pattern,
+               va_list args);
+
+    bool
+    VTest_False(TestBatchRunner *self, bool condition, const char *pattern,
+                va_list args);
+
+    bool
+    VTest_Int_Equals(TestBatchRunner *self, long got, long expected,
+                     const char *pattern, va_list args);
+
+    bool
+    VTest_Float_Equals(TestBatchRunner *self, double got, double expected,
+                       const char *pattern, va_list args);
+
+    bool
+    VTest_String_Equals(TestBatchRunner *self, const char *got,
+                        const char *expected, const char *pattern,
+                        va_list args);
+
+    bool
+    VPass(TestBatchRunner *self, const char *pattern, va_list args);
+
+    bool
+    VFail(TestBatchRunner *self, const char *pattern, va_list args);
+
+    void
+    VSkip(TestBatchRunner *self, const char *pattern, va_list args);
+}
+
+__C__
+#ifdef CFISH_USE_SHORT_NAMES
+  #define TEST_TRUE            Cfish_TestBatchRunner_Test_True
+  #define TEST_FALSE           Cfish_TestBatchRunner_Test_False
+  #define TEST_INT_EQ          Cfish_TestBatchRunner_Test_Int_Equals
+  #define TEST_FLOAT_EQ        Cfish_TestBatchRunner_Test_Float_Equals
+  #define TEST_STR_EQ          Cfish_TestBatchRunner_Test_String_Equals
+  #define PASS                 Cfish_TestBatchRunner_Pass
+  #define FAIL                 Cfish_TestBatchRunner_Fail
+  #define SKIP                 Cfish_TestBatchRunner_Skip
+#endif
+__END_C__
+
+
