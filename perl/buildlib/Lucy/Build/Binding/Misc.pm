@@ -89,9 +89,11 @@ CODE:
     cfish_CharBuf *class_name = cfish_CB_newf("%s", package);
     cfish_TestFormatter *formatter
         = (cfish_TestFormatter*)cfish_TestFormatterTAP_new();
-    bool result = testcfish_Test_run_batch(class_name, formatter);
+    cfish_TestSuite *suite = testcfish_Test_create_test_suite();
+    bool result = Cfish_TestSuite_Run_Batch(suite, class_name, formatter);
     CFISH_DECREF(class_name);
     CFISH_DECREF(formatter);
+    CFISH_DECREF(suite);
 
     RETVAL = result;
 OUTPUT: RETVAL
@@ -117,9 +119,11 @@ CODE:
     cfish_CharBuf *class_name = cfish_CB_newf("%s", package);
     cfish_TestFormatter *formatter
         = (cfish_TestFormatter*)cfish_TestFormatterTAP_new();
-    bool result = testlucy_Test_run_batch(class_name, formatter);
+    cfish_TestSuite *suite = testlucy_Test_create_test_suite();
+    bool result = Cfish_TestSuite_Run_Batch(suite, class_name, formatter);
     CFISH_DECREF(class_name);
     CFISH_DECREF(formatter);
+    CFISH_DECREF(suite);
 
     RETVAL = result;
 OUTPUT: RETVAL
