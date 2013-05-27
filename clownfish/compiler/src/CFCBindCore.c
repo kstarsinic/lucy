@@ -402,9 +402,11 @@ S_write_parcel_c(CFCBindCore *self, CFCParcel *parcel) {
         "%s\n"
         "#include \"%sparcel.h\"\n"
         "#include \"callbacks.h\"\n"
-        "#include \"Clownfish/VTable.h\"\n" // Needed for method_ptrs offset.
-        "#include \"Clownfish/VArray.h\"\n" // Needed for dump/load.
-        "#include \"Clownfish/Num.h\"\n"    // Needed for dump/load.
+        "#include \"Clownfish/CharBuf.h\"\n" // Needed for dump/load.
+        "#include \"Clownfish/Err.h\"\n"     // Needed for dump/load.
+        "#include \"Clownfish/Num.h\"\n"     // Needed for dump/load.
+        "#include \"Clownfish/VArray.h\"\n"  // Needed for dump/load.
+        "#include \"Clownfish/VTable.h\"\n"  // Needed for method_ptrs offset.
         "%s\n"
         "\n"
         "%s\n"
