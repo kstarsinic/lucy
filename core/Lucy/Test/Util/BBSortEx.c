@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#define C_LUCY_BBSORTEX
+#define C_TESTLUCY_BBSORTEX
+#define TESTLUCY_USE_SHORT_NAMES
 #include "Lucy/Util/ToolSet.h"
 
 #include "Lucy/Test/Util/BBSortEx.h"
@@ -54,7 +55,7 @@ BBSortEx_clear_cache(BBSortEx *self) {
     }
     self->mem_consumed = 0;
     BBSortEx_Clear_Cache_t super_clear_cache
-        = SUPER_METHOD_PTR(self->vtable, Lucy_BBSortEx_Clear_Cache);
+        = SUPER_METHOD_PTR(self->vtable, TestLucy_BBSortEx_Clear_Cache);
     super_clear_cache(self);
 }
 
