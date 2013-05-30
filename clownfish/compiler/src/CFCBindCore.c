@@ -265,6 +265,7 @@ S_write_parcel_h(CFCBindCore *self, CFCParcel *parcel) {
             extra_includes = CFCUtil_cat(extra_includes, "#include <",
                                          dep_prefix, "parcel.h>\n", NULL);
         }
+        FREEMEM(dep_parcels);
     }
 
     const char pattern[] =
@@ -386,12 +387,14 @@ S_write_parcel_c(CFCBindCore *self, CFCParcel *parcel) {
         inh_bootstrap = CFCUtil_cat(inh_bootstrap, "    ", inh_prefix,
                                     "bootstrap_inheritance();\n", NULL);
     }
+    FREEMEM(inh_parcels);
     CFCParcel **dep_parcels = CFCParcel_dependent_parcels(parcel);
     for (size_t i = 0; dep_parcels[i]; ++i) {
         const char *dep_prefix = CFCParcel_get_prefix(dep_parcels[i]);
         dep_bootstrap = CFCUtil_cat(dep_bootstrap, "    ", dep_prefix,
                                     "bootstrap_parcel();\n", NULL);
     }
+    FREEMEM(dep_parcels);
 
     char pattern[] =
         "%s\n"

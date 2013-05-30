@@ -132,12 +132,13 @@ void
 CFCParcel_add_inherited_parcel(CFCParcel *self, CFCParcel *inherited);
 
 /** Return a NULL-terminated array of all Parcels that the Parcel depends on.
+ * Must be freed by the caller.
  */
 CFCParcel**
 CFCParcel_dependent_parcels(CFCParcel *self);
 
 /** Return a NULL-terminated array of all Parcels containing superclasses that
- * subclasses in the Parcel extend.
+ * subclasses in the Parcel extend. Must be freed by the caller.
  */
 CFCParcel**
 CFCParcel_inherited_parcels(CFCParcel *self);
