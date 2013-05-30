@@ -129,7 +129,7 @@ CFCParcel_add_dependent_parcel(CFCParcel *self, CFCParcel *dependent);
  * extend. Also adds the other Parcel to the Parcel's dependencies.
  */
 void
-CFCParcel_add_extended_parcel(CFCParcel *self, CFCParcel *extended);
+CFCParcel_add_inherited_parcel(CFCParcel *self, CFCParcel *inherited);
 
 /** Return a NULL-terminated array of all Parcels that the Parcel depends on.
  */
@@ -140,7 +140,7 @@ CFCParcel_dependent_parcels(CFCParcel *self);
  * subclasses in the Parcel extend.
  */
 CFCParcel**
-CFCParcel_extended_parcels(CFCParcel *self);
+CFCParcel_inherited_parcels(CFCParcel *self);
 
 #ifdef __cplusplus
 }

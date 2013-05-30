@@ -371,19 +371,19 @@ S_write_parcel_c(CFCBindCore *self, CFCParcel *parcel) {
     // Bootstrapping code for dependent parcels.
     //
     // bootstrap_inheritance() first calls bootstrap_inheritance() for all
-    // parcels from which classes are extended. Then the VTables of the parcel
+    // parcels from which classes are inherited. Then the VTables of the parcel
     // are initialized. It aborts on recursive invocation.
     //
     // bootstrap_parcel() first calls bootstrap_inheritance() of its own
     // parcel. Then it calls bootstrap_parcel() for all dependent parcels.
     // Finally, it calls init_parcel(). Recursive invocation is allowed.
 
-    char *ext_bootstrap = CFCUtil_strdup("");
+    char *inh_bootstrap = CFCUtil_strdup("");
     char *dep_bootstrap = CFCUtil_strdup("");
-    CFCParcel **ext_parcels = CFCParcel_extended_parcels(parcel);
-    for (size_t i = 0; ext_parcels[i]; ++i) {
-        const char *ext_prefix = CFCParcel_get_prefix(ext_parcels[i]);
-        ext_bootstrap = CFCUtil_cat(ext_bootstrap, "    ", ext_prefix,
+    CFCParcel **inh_parcels = CFCParcel_inherited_parcels(parcel);
+    for (size_t i = 0; inh_parcels[i]; ++i) {
+        const char *inh_prefix = CFCParcel_get_prefix(inh_parcels[i]);
+        inh_bootstrap = CFCUtil_cat(inh_bootstrap, "    ", inh_prefix,
                                     "bootstrap_inheritance();\n", NULL);
     }
     CFCParcel **dep_parcels = CFCParcel_dependent_parcels(parcel);
@@ -426,7 +426,7 @@ S_write_parcel_c(CFCBindCore *self, CFCParcel *parcel) {
         "    }\n"
         "    if (bootstrap_state >= 2) { return; }\n"
         "    bootstrap_state = 1;\n"
-        "%s" // Bootstrap extended parcels.
+        "%s" // Bootstrap inherited parcels.
         "    cfish_VTable_bootstrap(vtable_specs, %d);\n"
         "    bootstrap_state = 2;\n"
         "}\n"
@@ -443,7 +443,7 @@ S_write_parcel_c(CFCBindCore *self, CFCParcel *parcel) {
         "%s\n";
     char *file_content
         = CFCUtil_sprintf(pattern, self->header, privacy_syms, prefix,
-                          includes, c_data, vt_specs, prefix, ext_bootstrap,
+                          includes, c_data, vt_specs, prefix, inh_bootstrap,
                           num_specs, prefix, prefix, dep_bootstrap, prefix,
                           self->footer);
 
@@ -459,7 +459,7 @@ S_write_parcel_c(CFCBindCore *self, CFCParcel *parcel) {
     FREEMEM(includes);
     FREEMEM(c_data);
     FREEMEM(vt_specs);
-    FREEMEM(ext_bootstrap);
+    FREEMEM(inh_bootstrap);
     FREEMEM(dep_bootstrap);
     FREEMEM(file_content);
 }

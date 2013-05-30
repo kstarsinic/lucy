@@ -41,8 +41,8 @@ struct CFCParcel {
     int is_included;
     CFCParcel **dependent_parcels;
     size_t num_dependent_parcels;
-    CFCParcel **extended_parcels;
-    size_t num_extended_parcels;
+    CFCParcel **inherited_parcels;
+    size_t num_inherited_parcels;
 };
 
 static CFCParcel *default_parcel = NULL;
@@ -233,8 +233,8 @@ CFCParcel_init(CFCParcel *self, const char *name, const char *cnick,
     // Initialize dependencies.
     self->dependent_parcels = (CFCParcel**)CALLOCATE(1, sizeof(CFCParcel*));
     self->num_dependent_parcels = 0;
-    self->extended_parcels = (CFCParcel**)CALLOCATE(1, sizeof(CFCParcel*));
-    self->num_extended_parcels = 0;
+    self->inherited_parcels = (CFCParcel**)CALLOCATE(1, sizeof(CFCParcel*));
+    self->num_inherited_parcels = 0;
 
     return self;
 }
@@ -329,10 +329,10 @@ CFCParcel_destroy(CFCParcel *self) {
         CFCBase_decref((CFCBase*)self->dependent_parcels[i]);
     }
     FREEMEM(self->dependent_parcels);
-    for (size_t i = 0; self->extended_parcels[i]; ++i) {
-        CFCBase_decref((CFCBase*)self->extended_parcels[i]);
+    for (size_t i = 0; self->inherited_parcels[i]; ++i) {
+        CFCBase_decref((CFCBase*)self->inherited_parcels[i]);
     }
-    FREEMEM(self->extended_parcels);
+    FREEMEM(self->inherited_parcels);
     CFCBase_destroy((CFCBase*)self);
 }
 
@@ -419,29 +419,29 @@ CFCParcel_add_dependent_parcel(CFCParcel *self, CFCParcel *dependent) {
 }
 
 void
-CFCParcel_add_extended_parcel(CFCParcel *self, CFCParcel *extended) {
+CFCParcel_add_inherited_parcel(CFCParcel *self, CFCParcel *inherited) {
     const char *prefix     = CFCParcel_get_prefix(self);
-    const char *ext_prefix = CFCParcel_get_prefix(extended);
+    const char *inh_prefix = CFCParcel_get_prefix(inherited);
 
-    if (strcmp(prefix, ext_prefix) == 0) { return; }
+    if (strcmp(prefix, inh_prefix) == 0) { return; }
 
-    for (size_t i = 0; self->extended_parcels[i]; ++i) {
+    for (size_t i = 0; self->inherited_parcels[i]; ++i) {
         const char *other_prefix
-            = CFCParcel_get_prefix(self->extended_parcels[i]);
-        if (strcmp(other_prefix, ext_prefix) == 0) { return; }
+            = CFCParcel_get_prefix(self->inherited_parcels[i]);
+        if (strcmp(other_prefix, inh_prefix) == 0) { return; }
     }
 
-    size_t num_parcels = self->num_extended_parcels;
-    self->extended_parcels
-        = (CFCParcel**)REALLOCATE(self->extended_parcels,
+    size_t num_parcels = self->num_inherited_parcels;
+    self->inherited_parcels
+        = (CFCParcel**)REALLOCATE(self->inherited_parcels,
                                   (num_parcels + 2) * sizeof(CFCParcel*));
-    self->extended_parcels[num_parcels]
-        = (CFCParcel*)CFCBase_incref((CFCBase*)extended);
-    self->extended_parcels[num_parcels+1] = NULL;
-    self->num_extended_parcels = num_parcels + 1;
+    self->inherited_parcels[num_parcels]
+        = (CFCParcel*)CFCBase_incref((CFCBase*)inherited);
+    self->inherited_parcels[num_parcels+1] = NULL;
+    self->num_inherited_parcels = num_parcels + 1;
 
     // Add to dependent parcels.
-    CFCParcel_add_dependent_parcel(self, extended);
+    CFCParcel_add_dependent_parcel(self, inherited);
 }
 
 CFCParcel**
@@ -450,8 +450,8 @@ CFCParcel_dependent_parcels(CFCParcel *self) {
 }
 
 CFCParcel**
-CFCParcel_extended_parcels(CFCParcel *self) {
-    return self->extended_parcels;
+CFCParcel_inherited_parcels(CFCParcel *self) {
+    return self->inherited_parcels;
 }
 
 /*****************************************************************************
