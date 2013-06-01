@@ -60,7 +60,7 @@ S_run_composite_tests(CFCTest *test);
 
 const CFCTestBatch CFCTEST_BATCH_TYPE = {
     "Clownfish::CFC::Model::Type",
-    361,
+    360,
     S_run_tests
 };
 
@@ -81,12 +81,10 @@ static void
 S_run_basic_tests(CFCTest *test) {
     CFCParcel *neato_parcel = CFCParcel_new("Neato", NULL, NULL, false);
     CFCParcel_register(neato_parcel);
-    CFCType *type = CFCType_new(0, neato_parcel, "mytype_t", 0, NULL);
+    CFCType *type = CFCType_new(0, neato_parcel, "mytype_t", 0);
 
     OK(test, CFCType_get_parcel(type) == neato_parcel, "get_parcel");
-    STR_EQ(test, CFCType_to_c(type), "", "to_c");
-    CFCType_set_c_string(type, "mytype_t");
-    STR_EQ(test, CFCType_to_c(type), "mytype_t", "set_c_string");
+    STR_EQ(test, CFCType_to_c(type), "mytype_t", "to_c");
     STR_EQ(test, CFCType_get_specifier(type), "mytype_t", "get_specifier");
 
 #define TEST_BOOL_ACCESSOR(type, name) \
@@ -115,27 +113,24 @@ S_run_basic_tests(CFCTest *test) {
 static void
 S_run_primitive_tests(CFCTest *test) {
     CFCParcel *parcel = CFCParcel_default_parcel();
-    CFCType *type = CFCType_new(CFCTYPE_PRIMITIVE, parcel, "hump_t", 0, NULL);
+    CFCType *type = CFCType_new(CFCTYPE_PRIMITIVE, parcel, "hump_t", 0);
     OK(test, CFCType_is_primitive(type), "is_primitive");
 
     {
-        CFCType *twin
-            = CFCType_new(CFCTYPE_PRIMITIVE, parcel, "hump_t", 0, NULL);
+        CFCType *twin = CFCType_new(CFCTYPE_PRIMITIVE, parcel, "hump_t", 0);
         OK(test, CFCType_equals(type, twin), "equals");
         CFCBase_decref((CFCBase*)twin);
     }
 
     {
-        CFCType *other
-            = CFCType_new(CFCTYPE_PRIMITIVE, parcel, "dump_t", 0, NULL);
+        CFCType *other = CFCType_new(CFCTYPE_PRIMITIVE, parcel, "dump_t", 0);
         OK(test, !CFCType_equals(type, other), "equals spoiled by specifier");
         CFCBase_decref((CFCBase*)other);
     }
 
     {
-        CFCType *other
-            = CFCType_new(CFCTYPE_PRIMITIVE|CFCTYPE_CONST, parcel, "hump_t", 0,
-                          NULL);
+        CFCType *other = CFCType_new(CFCTYPE_PRIMITIVE|CFCTYPE_CONST, parcel,
+                                     "hump_t", 0);
         OK(test, !CFCType_equals(type, other), "equals spoiled by const");
         CFCBase_decref((CFCBase*)other);
     }
@@ -234,7 +229,7 @@ S_run_void_tests(CFCTest *test) {
     CFCParser *parser = CFCParser_new();
 
     {
-        CFCType *type = CFCType_new_void(0);
+        CFCType *type = CFCType_new_void(false);
         STR_EQ(test, CFCType_get_specifier(type), "void", "get_specifier");
         STR_EQ(test, CFCType_to_c(type), "void", "to_c");
         OK(test, CFCType_is_void(type), "is_void");
@@ -242,7 +237,7 @@ S_run_void_tests(CFCTest *test) {
     }
 
     {
-        CFCType *type = CFCType_new_void(CFCTYPE_CONST);
+        CFCType *type = CFCType_new_void(true);
         STR_EQ(test, CFCType_to_c(type), "const void",
                "'const' in C representation");
         CFCBase_decref((CFCBase*)type);

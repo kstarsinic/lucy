@@ -1386,15 +1386,13 @@ PPCODE:
 MODULE = Clownfish::CFC   PACKAGE = Clownfish::CFC::Model::Type
 
 SV*
-_new(flags, parcel, specifier, indirection, c_string)
+_new(flags, parcel, specifier, indirection)
     int flags;
     CFCParcel *parcel;
     const char *specifier;
     int indirection;
-    const char *c_string;
 CODE:
-    CFCType *self = CFCType_new(flags, parcel, specifier, indirection,
-                                c_string);
+    CFCType *self = CFCType_new(flags, parcel, specifier, indirection);
     RETVAL = S_cfcbase_to_perlref(self);
     CFCBase_decref((CFCBase*)self);
 OUTPUT: RETVAL
@@ -1604,7 +1602,6 @@ ALIAS:
     get_specifier   = 2
     get_parcel      = 4
     get_indirection = 6
-    set_c_string    = 7
     to_c            = 8
     const           = 10
     set_nullable    = 11
@@ -1641,8 +1638,6 @@ PPCODE:
         case 6:
             retval = newSViv(CFCType_get_indirection(self));
             break;
-        case 7:
-            CFCType_set_c_string(self, SvPV_nolen(ST(1)));
         case 8: {
                 const char *c_string = CFCType_to_c(self);
                 retval = newSVpvn(c_string, strlen(c_string));

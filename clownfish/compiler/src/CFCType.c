@@ -52,10 +52,9 @@ static const CFCMeta CFCTYPE_META = {
 
 CFCType*
 CFCType_new(int flags, struct CFCParcel *parcel, const char *specifier,
-            int indirection, const char *c_string) {
+            int indirection) {
     CFCType *self = (CFCType*)CFCBase_allocate(&CFCTYPE_META);
-    return CFCType_init(self, flags, parcel, specifier, indirection,
-                        c_string);
+    return CFCType_init(self, flags, parcel, specifier, indirection);
 }
 
 static void
@@ -84,12 +83,12 @@ S_check_flags(int supplied, int acceptable, const char *type_name) {
 
 CFCType*
 CFCType_init(CFCType *self, int flags, struct CFCParcel *parcel,
-             const char *specifier, int indirection, const char *c_string) {
+             const char *specifier, int indirection) {
     self->flags       = flags;
     self->parcel      = (CFCParcel*)CFCBase_incref((CFCBase*)parcel);
     self->specifier   = CFCUtil_strdup(specifier);
     self->indirection = indirection;
-    self->c_string    = c_string ? CFCUtil_strdup(c_string) : CFCUtil_strdup("");
+    self->c_string    = NULL;
     self->width       = 0;
     self->array       = NULL;
     self->child       = NULL;
@@ -127,22 +126,13 @@ CFCType_new_integer(int flags, const char *specifier) {
         CFCUtil_die("Unknown integer specifier: '%s'", specifier);
     }
 
-    // Cache the C representation of this type.
-    char c_string[32];
-    if (flags & CFCTYPE_CONST) {
-        sprintf(c_string, "const %s", specifier);
-    }
-    else {
-        strcpy(c_string, specifier);
-    }
-
     // Add flags.
     flags |= CFCTYPE_PRIMITIVE;
     flags |= CFCTYPE_INTEGER;
     S_check_flags(flags, CFCTYPE_CONST | CFCTYPE_PRIMITIVE | CFCTYPE_INTEGER,
                   "Integer");
 
-    CFCType *self = CFCType_new(flags, NULL, specifier, 0, c_string);
+    CFCType *self = CFCType_new(flags, NULL, specifier, 0);
     self->width = width;
     return self;
 }
@@ -165,21 +155,12 @@ CFCType_new_float(int flags, const char *specifier) {
         }
     }
 
-    // Cache the C representation of this type.
-    char c_string[32];
-    if (flags & CFCTYPE_CONST) {
-        sprintf(c_string, "const %s", specifier);
-    }
-    else {
-        strcpy(c_string, specifier);
-    }
-
     flags |= CFCTYPE_PRIMITIVE;
     flags |= CFCTYPE_FLOATING;
     S_check_flags(flags, CFCTYPE_CONST | CFCTYPE_PRIMITIVE | CFCTYPE_FLOATING,
                   "Floating");
 
-    return CFCType_new(flags, NULL, specifier, 0, c_string);
+    return CFCType_new(flags, NULL, specifier, 0);
 }
 
 #define MAX_SPECIFIER_LEN 256
@@ -246,10 +227,8 @@ CFCType_new_object(int flags, CFCParcel *parcel, const char *specifier,
                            | CFCTYPE_DECREMENTED;
     S_check_flags(flags, acceptable_flags, "Object");
 
-    return CFCType_new(flags, parcel, specifier, 1, NULL);
+    return CFCType_new(flags, parcel, specifier, 1);
 }
-
-#define MAX_COMPOSITE_LEN 256
 
 CFCType*
 CFCType_new_composite(int flags, CFCType *child, int indirection,
@@ -261,7 +240,7 @@ CFCType_new_composite(int flags, CFCType *child, int indirection,
     S_check_flags(flags, CFCTYPE_COMPOSITE | CFCTYPE_NULLABLE, "Composite");
 
     CFCType *self = CFCType_new(flags, NULL, CFCType_get_specifier(child),
-                                indirection, NULL);
+                                indirection);
     self->child = (CFCType*)CFCBase_incref((CFCBase*)child);
 
     // Record array spec.
@@ -276,14 +255,13 @@ CFCType_new_composite(int flags, CFCType *child, int indirection,
 CFCType*
 CFCType_new_void(int is_const) {
     int flags = CFCTYPE_VOID;
-    const char *c_string = is_const ? "const void" : "void";
     if (is_const) { flags |= CFCTYPE_CONST; }
-    return CFCType_new(flags, NULL, "void", 0, c_string);
+    return CFCType_new(flags, NULL, "void", 0);
 }
 
 CFCType*
 CFCType_new_va_list(void) {
-    return CFCType_new(CFCTYPE_VA_LIST, NULL, "va_list", 0, "va_list");
+    return CFCType_new(CFCTYPE_VA_LIST, NULL, "va_list", 0);
 }
 
 CFCType*
@@ -295,30 +273,13 @@ CFCType_new_arbitrary(CFCParcel *parcel, const char *specifier) {
         }
     }
 
-    return CFCType_new(CFCTYPE_ARBITRARY, parcel, specifier, 0, specifier);
+    return CFCType_new(CFCTYPE_ARBITRARY, parcel, specifier, 0);
 }
 
 void
 CFCType_resolve(CFCType *self, CFCClass **classes) {
     if (CFCType_is_composite(self)) {
         CFCType_resolve(self->child, classes);
-
-        // Cache C representation.
-        // NOTE: Array postfixes are NOT included.
-        const char   *child_c_string = CFCType_to_c(self->child);
-        size_t        child_c_len    = strlen(child_c_string);
-        size_t        amount         = child_c_len + self->indirection;
-        if (amount > MAX_COMPOSITE_LEN) {
-            CFCUtil_die("C representation too long");
-        }
-        char c_string[MAX_COMPOSITE_LEN + 1];
-        strcpy(c_string, child_c_string);
-        for (int i = 0; i < self->indirection; i++) {
-            strncat(c_string, "*", 1);
-        }
-        FREEMEM(self->c_string);
-        self->c_string = CFCUtil_strdup(c_string);
-
         return;
     }
     if (!CFCType_is_object(self)) {
@@ -375,23 +336,6 @@ CFCType_resolve(CFCType *self, CFCClass **classes) {
     if (klass) {
         CFCParcel *class_parcel = CFCClass_get_parcel(klass);
         CFCParcel_add_dependent_parcel(self->parcel, class_parcel);
-    }
-
-    // Cache C representation.
-    char c_string[MAX_SPECIFIER_LEN + 10];
-    if (CFCType_const(self)) {
-        sprintf(c_string, "const %s*", self->specifier);
-    }
-    else {
-        sprintf(c_string, "%s*", self->specifier);
-    }
-    FREEMEM(self->c_string);
-    self->c_string = CFCUtil_strdup(c_string);
-
-    // Cache name of VTable variable.
-    self->vtable_var = CFCUtil_strdup(self->specifier);
-    for (int i = 0; self->vtable_var[i] != 0; i++) {
-        self->vtable_var[i] = toupper(self->vtable_var[i]);
     }
 }
 
@@ -467,6 +411,12 @@ CFCType_get_specifier(CFCType *self) {
 
 const char*
 CFCType_get_vtable_var(CFCType *self) {
+    if (!self->vtable_var) {
+        self->vtable_var = CFCUtil_strdup(self->specifier);
+        for (int i = 0; self->vtable_var[i] != 0; i++) {
+            self->vtable_var[i] = toupper(self->vtable_var[i]);
+        }
+    }
     return self->vtable_var;
 }
 
@@ -480,15 +430,43 @@ CFCType_get_parcel(CFCType *self) {
     return self->parcel;
 }
 
-void
-CFCType_set_c_string(CFCType *self, const char *c_string) {
-    FREEMEM(self->c_string);
-    self->c_string = CFCUtil_strdup(c_string);
-}
-
 const char*
 CFCType_to_c(CFCType *self) {
-    return self->c_string;
+    char *c_string = self->c_string;
+
+    if (c_string) { return c_string; }
+
+    if (CFCType_is_composite(self)) {
+        // NOTE: Array postfixes are NOT included.
+        const char *child_c_string = CFCType_to_c(self->child);
+        size_t      child_c_len    = strlen(child_c_string);
+        size_t      amount         = child_c_len + self->indirection;
+        c_string = (char*)MALLOCATE(amount + 1);
+        strcpy(c_string, child_c_string);
+        for (int i = 0; i < self->indirection; i++) {
+            strncat(c_string, "*", 1);
+        }
+    }
+    else if (CFCType_is_object(self)) {
+        if (CFCType_const(self)) {
+            c_string = CFCUtil_sprintf("const %s*", self->specifier);
+        }
+        else {
+            c_string = CFCUtil_sprintf("%s*", self->specifier);
+        }
+    }
+    else {
+        if (CFCType_const(self)) {
+            c_string = CFCUtil_sprintf("const %s", self->specifier);
+        }
+        else {
+            c_string = CFCUtil_strdup(self->specifier);
+        }
+    }
+
+    self->c_string = c_string;
+
+    return c_string;
 }
 
 size_t

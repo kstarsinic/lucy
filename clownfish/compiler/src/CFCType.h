@@ -51,15 +51,14 @@ struct CFCParcel;
  * array subscripts.
  * @param indirection integer indicating level of indirection. Example: the C
  * type "float**" has a specifier of "float" and indirection 2.
- * @param c_string The C representation of the type.
  */
 CFCType*
 CFCType_new(int flags, struct CFCParcel *parcel, const char *specifier,
-            int indirection, const char *c_string);
+            int indirection);
 
 CFCType*
 CFCType_init(CFCType *self, int flags, struct CFCParcel *parcel,
-             const char *specifier, int indirection, const char *c_string);
+             const char *specifier, int indirection);
 
 /** Return a Type representing an integer primitive.
  *
@@ -213,11 +212,6 @@ CFCType_get_indirection(CFCType *self);
  */
 struct CFCParcel*
 CFCType_get_parcel(CFCType *self);
-
-/** Set the C representation of the Type.
- */
-void
-CFCType_set_c_string(CFCType *self, const char *c_string);
 
 /** Return the C representation of the type.
  */

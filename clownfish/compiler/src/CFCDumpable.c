@@ -145,9 +145,6 @@ S_make_method_obj(CFCClass *klass, const char *method_name) {
     CFCMethod *method = CFCMethod_new(klass_parcel, "public", klass_name,
                                       klass_cnick, method_name, return_type,
                                       param_list, NULL, false, false);
-    // Hack
-    CFCClass *dummy_class = NULL;
-    CFCMethod_resolve_types(method, &dummy_class);
 
     CFCBase_decref((CFCBase*)param_list);
     CFCBase_decref((CFCBase*)self_type);

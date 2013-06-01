@@ -44,6 +44,9 @@ static const CFCMeta CFCVARIABLE_META = {
     (CFCBase_destroy_t)CFCVariable_destroy
 };
 
+static void
+S_generate_c_strings(CFCVariable *self);
+
 CFCVariable*
 CFCVariable_new(struct CFCParcel *parcel, const char *exposure,
                 const char *class_name, const char *class_cnick,
@@ -81,23 +84,9 @@ CFCVariable_init(CFCVariable *self, struct CFCParcel *parcel,
     return self;
 }
 
-// Cache various C string representations. Will be called after type has
-// been resolved.
 void
 CFCVariable_resolve_type(CFCVariable *self, struct CFCClass **classes) {
-    CFCType *type = self->type;
-    CFCType_resolve(type, classes);
-
-    const char *type_str = CFCType_to_c(type);
-    const char *postfix  = "";
-    if (CFCType_is_composite(type) && CFCType_get_array(type) != NULL) {
-        postfix = CFCType_get_array(type);
-    }
-    const char *micro_sym = CFCVariable_micro_sym(self);
-    self->local_c = CFCUtil_sprintf("%s %s%s", type_str, micro_sym, postfix);
-    self->local_dec = CFCUtil_sprintf("%s;", self->local_c);
-    const char *full_sym = CFCVariable_full_sym(self);
-    self->global_c = CFCUtil_sprintf("%s %s%s", type_str, full_sym, postfix);
+    CFCType_resolve(self->type, classes);
 }
 
 void
@@ -115,6 +104,23 @@ CFCVariable_equals(CFCVariable *self, CFCVariable *other) {
     return CFCSymbol_equals((CFCSymbol*)self, (CFCSymbol*)other);
 }
 
+// Cache various C string representations.
+static void
+S_generate_c_strings(CFCVariable *self) {
+    const char *type_str = CFCType_to_c(self->type);
+    const char *postfix  = "";
+    if (CFCType_is_composite(self->type)
+        && CFCType_get_array(self->type) != NULL
+       ) {
+        postfix = CFCType_get_array(self->type);
+    }
+    const char *micro_sym = CFCVariable_micro_sym(self);
+    self->local_c = CFCUtil_sprintf("%s %s%s", type_str, micro_sym, postfix);
+    self->local_dec = CFCUtil_sprintf("%s;", self->local_c);
+    const char *full_sym = CFCVariable_full_sym(self);
+    self->global_c = CFCUtil_sprintf("%s %s%s", type_str, full_sym, postfix);
+}
+
 CFCType*
 CFCVariable_get_type(CFCVariable *self) {
     return self->type;
@@ -127,16 +133,19 @@ CFCVariable_inert(CFCVariable *self) {
 
 const char*
 CFCVariable_local_c(CFCVariable *self) {
+    if (!self->local_c) { S_generate_c_strings(self); }
     return self->local_c;
 }
 
 const char*
 CFCVariable_global_c(CFCVariable *self) {
+    if (!self->global_c) { S_generate_c_strings(self); }
     return self->global_c;
 }
 
 const char*
 CFCVariable_local_declaration(CFCVariable *self) {
+    if (!self->local_dec) { S_generate_c_strings(self); }
     return self->local_dec;
 }
 

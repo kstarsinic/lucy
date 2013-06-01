@@ -55,8 +55,8 @@ CFCParamList_init(CFCParamList *self, int variadic) {
     self->num_vars  = 0;
     self->variables = (CFCVariable**)CALLOCATE(1, sizeof(void*));
     self->values    = (char**)CALLOCATE(1, sizeof(char*));
-    self->c_string  = CFCUtil_strdup("");
-    self->name_list = CFCUtil_strdup("");
+    self->c_string  = NULL;
+    self->name_list = NULL;
     return self;
 }
 
@@ -65,7 +65,6 @@ CFCParamList_resolve_types(CFCParamList *self, struct CFCClass **classes) {
     for (size_t i = 0; self->variables[i]; ++i) {
         CFCVariable_resolve_type(self->variables[i], classes);
     }
-    S_generate_c_strings(self);
 }
 
 void
@@ -115,8 +114,6 @@ S_generate_c_strings(CFCParamList *self) {
     if (self->num_vars == 0) {
         c_string_size += sizeof("void");
     }
-    FREEMEM(self->c_string);
-    FREEMEM(self->name_list);
     self->c_string  = (char*)MALLOCATE(c_string_size);
     self->name_list = (char*)MALLOCATE(name_list_size);
     self->c_string[0] = '\0';
@@ -169,11 +166,13 @@ CFCParamList_variadic(CFCParamList *self) {
 
 const char*
 CFCParamList_to_c(CFCParamList *self) {
+    if (!self->c_string) { S_generate_c_strings(self); }
     return self->c_string;
 }
 
 const char*
 CFCParamList_name_list(CFCParamList *self) {
+    if (!self->name_list) { S_generate_c_strings(self); }
     return self->name_list;
 }
 

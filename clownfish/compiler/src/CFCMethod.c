@@ -105,6 +105,24 @@ CFCMethod_init(CFCMethod *self, CFCParcel *parcel, const char *exposure,
                      docucomment, false);
     FREEMEM(micro_sym);
 
+    // Verify that the first element in the arg list is a self.
+    CFCVariable **args = CFCParamList_get_variables(param_list);
+    if (!args[0]) { CFCUtil_die("Missing 'self' argument"); }
+    CFCType *type = CFCVariable_get_type(args[0]);
+    const char *specifier = CFCType_get_specifier(type);
+    const char *prefix    = CFCMethod_get_prefix(self);
+    const char *last_colon = strrchr(class_name, ':');
+    const char *struct_sym = last_colon ? last_colon + 1 : class_name;
+    if (strcmp(specifier, struct_sym) != 0) {
+        char *wanted = CFCUtil_sprintf("%s%s", prefix, struct_sym);
+        int mismatch = strcmp(wanted, specifier);
+        FREEMEM(wanted);
+        if (mismatch) {
+            CFCUtil_die("First arg type doesn't match class: '%s' '%s'",
+                        class_name, specifier);
+        }
+    }
+
     self->macro_sym     = CFCUtil_strdup(macro_sym);
     self->is_final      = is_final;
     self->is_abstract   = is_abstract;
@@ -121,27 +139,6 @@ CFCMethod_init(CFCMethod *self, CFCParcel *parcel, const char *exposure,
 void
 CFCMethod_resolve_types(CFCMethod *self, struct CFCClass **classes) {
     CFCFunction_resolve_types((CFCFunction*)self, classes);
-
-    // Verify that the first element in the arg list is a self.
-    CFCVariable **args = CFCParamList_get_variables(self->function.param_list);
-    if (!args[0]) { CFCUtil_die("Missing 'self' argument"); }
-    CFCType *type = CFCVariable_get_type(args[0]);
-    const char *specifier = CFCType_get_specifier(type);
-    const char *prefix    = CFCMethod_get_prefix(self);
-    const char *class_name = CFCMethod_get_class_name(self);
-    const char *last_colon = strrchr(class_name, ':');
-    const char *struct_sym = last_colon ? last_colon + 1 : class_name;
-    char *wanted = CFCUtil_sprintf("%s%s", prefix, struct_sym);
-    int mismatch = strcmp(wanted, specifier);
-    FREEMEM(wanted);
-    if (mismatch) {
-        CFCUtil_die("First arg type doesn't match class: '%s' '%s'",
-                    class_name, specifier);
-    }
-
-    // Derive more symbols.
-    const char *full_func_sym = CFCMethod_implementing_func_sym(self);
-    self->full_override_sym = CFCUtil_sprintf("%s_OVERRIDE", full_func_sym);
 }
 
 void
@@ -296,6 +293,11 @@ CFCMethod_full_typedef(CFCMethod *self, CFCClass *invoker) {
 
 const char*
 CFCMethod_full_override_sym(CFCMethod *self) {
+    if (!self->full_override_sym) {
+        const char *full_func_sym = CFCMethod_implementing_func_sym(self);
+        self->full_override_sym
+            = CFCUtil_sprintf("%s_OVERRIDE", full_func_sym);
+    }
     return self->full_override_sym;
 }
 
