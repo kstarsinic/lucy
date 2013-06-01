@@ -163,8 +163,6 @@ CFCType_new_float(int flags, const char *specifier) {
     return CFCType_new(flags, NULL, specifier, 0);
 }
 
-#define MAX_SPECIFIER_LEN 256
-
 CFCType*
 CFCType_new_object(int flags, CFCParcel *parcel, const char *specifier,
                    int indirection) {
@@ -191,30 +189,17 @@ CFCType_new_object(int flags, CFCParcel *parcel, const char *specifier,
         flags |= CFCTYPE_STRING_TYPE;
     }
 
-    char small_specifier[MAX_SPECIFIER_LEN + 1];
-    if (isupper(*specifier)) {
-        strcpy(small_specifier, specifier);
-    }
-    else if (!isalpha(*specifier)) {
+    // Validate specifier.
+    if (!isalpha(*specifier)) {
         CFCUtil_die("Invalid specifier: '%s'", specifier);
     }
-    else {
-        if (strlen(specifier) > MAX_SPECIFIER_LEN) {
-            CFCUtil_die("Specifier too long");
+    const char *small_specifier = specifier;
+    while (!isupper(*small_specifier)) {
+        if (!isalnum(*small_specifier) && *small_specifier != '_') {
+            CFCUtil_die("Invalid specifier: '%s'", specifier);
         }
-        const char *probe = specifier;
-        while (*probe) {
-            if (isupper(*probe)) {
-                break;
-            }
-            else if (!isalnum(*probe) && *probe != '_') {
-                CFCUtil_die("Invalid specifier: '%s'", specifier);
-            }
-            probe++;
-        }
-        strcpy(small_specifier, probe);
+        small_specifier++;
     }
-
     if (!CFCSymbol_validate_class_name_component(small_specifier)) {
         CFCUtil_die("Invalid specifier: '%s'", specifier);
     }
@@ -286,11 +271,11 @@ CFCType_resolve(CFCType *self, CFCClass **classes) {
         return;
     }
 
-    CFCClass *klass = NULL;
+    CFCClass *klass     = NULL;
+    char     *specifier = self->specifier;
 
     if (isupper(self->specifier[0])) {
         // Try to find class from class list.
-        const char *specifier = self->specifier;
         for (size_t i = 0; classes[i]; ++i) {
             CFCClass   *maybe_class = classes[i];
             const char *struct_sym  = CFCClass_get_struct_sym(maybe_class);
@@ -309,17 +294,11 @@ CFCType_resolve(CFCType *self, CFCClass **classes) {
 
         // Create actual specifier with prefix.
         const char *prefix = CFCClass_get_prefix(klass);
-        if (strlen(prefix) + strlen(specifier) > MAX_SPECIFIER_LEN) {
-            CFCUtil_die("Specifier and/or parcel prefix too long");
-        }
-        char full_specifier[MAX_SPECIFIER_LEN + 1];
-        sprintf(full_specifier, "%s%s", prefix, specifier);
-        FREEMEM(self->specifier);
-        self->specifier = CFCUtil_strdup(full_specifier);
+        self->specifier = CFCUtil_sprintf("%s%s", prefix, specifier);
+        FREEMEM(specifier);
     }
     else {
         // Try to find class from class list.
-        const char *specifier = self->specifier;
         for (size_t i = 0; classes[i]; ++i) {
             CFCClass *maybe_class = classes[i];
             const char *full_struct_sym
