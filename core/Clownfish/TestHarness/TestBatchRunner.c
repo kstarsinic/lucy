@@ -86,12 +86,12 @@ TestBatchRunner_run_batch(TestBatchRunner *self, TestBatch *batch) {
     }
     if (self->num_failed > 0) {
         failed = true;
-        TestFormatter_Batch_Comment(self->formatter, "%d/%d tests failed.\n",
+        TestFormatter_batch_comment(self->formatter, "%d/%d tests failed.\n",
                                     self->num_failed, self->test_num);
     }
     if (self->test_num != self->num_planned) {
         failed = true;
-        TestFormatter_Batch_Comment(self->formatter,
+        TestFormatter_batch_comment(self->formatter,
                                     "Bad plan: You planned %d tests but ran"
                                     " %d.\n",
                                     self->num_planned, self->test_num);
@@ -228,7 +228,7 @@ TestBatchRunner_vtest_int_equals(TestBatchRunner *self, long got,
     bool pass = (got == expected);
     S_vtest_true(self, pass, pattern, args);
     if (!pass) {
-        TestFormatter_Test_Comment(self->formatter,
+        TestFormatter_test_comment(self->formatter,
                                    "Expected '%ld', got '%ld'.\n",
                                    expected, got);
     }
@@ -243,7 +243,7 @@ TestBatchRunner_vtest_float_equals(TestBatchRunner *self, double got,
     bool   pass           = (fabs(relative_error) < 1e-6);
     S_vtest_true(self, pass, pattern, args);
     if (!pass) {
-        TestFormatter_Test_Comment(self->formatter,
+        TestFormatter_test_comment(self->formatter,
                                    "Expected '%e', got '%e'.\n",
                                    expected, got);
     }
@@ -257,7 +257,7 @@ TestBatchRunner_vtest_string_equals(TestBatchRunner *self, const char *got,
     bool pass = (strcmp(got, expected) == 0);
     S_vtest_true(self, pass, pattern, args);
     if (!pass) {
-        TestFormatter_Test_Comment(self->formatter,
+        TestFormatter_test_comment(self->formatter,
                                    "Expected '%s', got '%s'.\n",
                                    expected, got);
     }

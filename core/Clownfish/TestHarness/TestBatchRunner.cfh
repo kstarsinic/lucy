@@ -60,33 +60,33 @@ class Clownfish::TestHarness::TestBatchRunner inherits Clownfish::Obj {
     uint32_t
     Get_Num_Failed(TestBatchRunner *self);
 
-    bool
-    Test_True(TestBatchRunner *self, bool condition, const char *pattern, ...);
+    inert bool
+    test_true(TestBatchRunner *self, bool condition, const char *pattern, ...);
 
-    bool
-    Test_False(TestBatchRunner *self, bool condition, const char *pattern,
+    inert bool
+    test_false(TestBatchRunner *self, bool condition, const char *pattern,
                ...);
 
-    bool
-    Test_Int_Equals(TestBatchRunner *self, long got, long expected,
+    inert bool
+    test_int_equals(TestBatchRunner *self, long got, long expected,
                     const char *pattern, ...);
 
-    bool
-    Test_Float_Equals(TestBatchRunner *self, double got, double expected,
+    inert bool
+    test_float_equals(TestBatchRunner *self, double got, double expected,
                       const char *pattern, ...);
 
-    bool
-    Test_String_Equals(TestBatchRunner *self, const char *got,
+    inert bool
+    test_string_equals(TestBatchRunner *self, const char *got,
                        const char *expected, const char *pattern, ...);
 
-    bool
-    Pass(TestBatchRunner *self, const char *pattern, ...);
+    inert bool
+    pass(TestBatchRunner *self, const char *pattern, ...);
 
-    bool
-    Fail(TestBatchRunner *self, const char *pattern, ...);
+    inert bool
+    fail(TestBatchRunner *self, const char *pattern, ...);
 
-    void
-    Skip(TestBatchRunner *self, const char *pattern, ...);
+    inert void
+    skip(TestBatchRunner *self, const char *pattern, ...);
 
     bool
     VTest_True(TestBatchRunner *self, bool condition, const char *pattern,
@@ -121,14 +121,14 @@ class Clownfish::TestHarness::TestBatchRunner inherits Clownfish::Obj {
 
 __C__
 #ifdef CFISH_USE_SHORT_NAMES
-  #define TEST_TRUE            Cfish_TestBatchRunner_Test_True
-  #define TEST_FALSE           Cfish_TestBatchRunner_Test_False
-  #define TEST_INT_EQ          Cfish_TestBatchRunner_Test_Int_Equals
-  #define TEST_FLOAT_EQ        Cfish_TestBatchRunner_Test_Float_Equals
-  #define TEST_STR_EQ          Cfish_TestBatchRunner_Test_String_Equals
-  #define PASS                 Cfish_TestBatchRunner_Pass
-  #define FAIL                 Cfish_TestBatchRunner_Fail
-  #define SKIP                 Cfish_TestBatchRunner_Skip
+  #define TEST_TRUE            cfish_TestBatchRunner_test_true
+  #define TEST_FALSE           cfish_TestBatchRunner_test_false
+  #define TEST_INT_EQ          cfish_TestBatchRunner_test_int_equals
+  #define TEST_FLOAT_EQ        cfish_TestBatchRunner_test_float_equals
+  #define TEST_STR_EQ          cfish_TestBatchRunner_test_string_equals
+  #define PASS                 cfish_TestBatchRunner_pass
+  #define FAIL                 cfish_TestBatchRunner_fail
+  #define SKIP                 cfish_TestBatchRunner_skip
 #endif
 __END_C__
 

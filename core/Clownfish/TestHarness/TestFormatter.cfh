@@ -22,15 +22,15 @@ abstract class Clownfish::TestHarness::TestFormatter inherits Clownfish::Obj {
     inert TestFormatter*
     init(TestFormatter *self);
 
-    void
-    Test_Result(TestFormatter *self, bool pass, uint32_t test_num,
+    inert void
+    test_result(TestFormatter *self, bool pass, uint32_t test_num,
                 const char *fmt, ...);
 
-    void
-    Test_Comment(TestFormatter *self, const char *fmt, ...);
+    inert void
+    test_comment(TestFormatter *self, const char *fmt, ...);
 
-    void
-    Batch_Comment(TestFormatter *self, const char *fmt, ...);
+    inert void
+    batch_comment(TestFormatter *self, const char *fmt, ...);
 
     /** Print output at the beginning of a test batch.
      *
