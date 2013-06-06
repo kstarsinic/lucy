@@ -21,7 +21,7 @@ use Carp;
 use Scalar::Util qw( blessed );
 use Compress::Zlib qw( compress );
 use Clownfish::Util::StringHelper qw( cat_bytes );
-use Lucy qw( to_perl );
+use Clownfish qw( to_perl );
 use bytes;
 no bytes;
 
