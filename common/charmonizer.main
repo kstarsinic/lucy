@@ -42,8 +42,10 @@ typedef struct SourceFileContext {
     chaz_MakeVar *var;
 } SourceFileContext;
 
-static const char lucy_version[]       = "0.3.0";
-static const char lucy_major_version[] = "0.3";
+static const char lucy_version[]        = "0.3.0";
+static const char lucy_major_version[]  = "0.3";
+static const char cfish_version[]       = "0.3.0";
+static const char cfish_major_version[] = "0.3";
 
 static void
 S_add_compiler_flags(struct chaz_CLIArgs *args) {
@@ -191,6 +193,7 @@ S_write_makefile(struct chaz_CLIArgs *args) {
     chaz_CFlags *test_cflags;
 
     chaz_SharedLib *lib;
+    chaz_SharedLib *cfish_lib;
 
     char *lib_filename;
     char *cfish_lib_filename;
@@ -280,9 +283,12 @@ S_write_makefile(struct chaz_CLIArgs *args) {
     rule = chaz_MakeFile_add_rule(makefile, cfc_exe, "$(LEMON_EXE)");
     chaz_MakeRule_add_make_command(rule, cfc_dir, NULL);
 
-    /* TODO: This doesn't work on Windows. */
-    cfish_lib_filename = chaz_Util_join("", cfr_dir, dir_sep, "libcfish",
-                                        chaz_OS_shared_lib_ext(), NULL);
+    cfish_lib = chaz_SharedLib_new("cfish", cfish_version,
+                                   cfish_major_version);
+    scratch = chaz_SharedLib_filename(cfish_lib);
+    cfish_lib_filename = chaz_Util_join(dir_sep, cfr_dir, scratch, NULL);
+    free(scratch);
+
     /*
      * The Clownfish runtime also builds CFC, so it might be built twice at
      * the same time in parallel builds. Add CFC as prereq to avoid this.
@@ -416,6 +422,7 @@ S_write_makefile(struct chaz_CLIArgs *args) {
 
     chaz_MakeFile_destroy(makefile);
     chaz_SharedLib_destroy(lib);
+    chaz_SharedLib_destroy(cfish_lib);
     free(core_dir);
     free(lemon_dir);
     free(cfc_dir);
