@@ -7064,6 +7064,8 @@ S_write_makefile(struct chaz_CLIArgs *args) {
     free(scratch);
 
     link_flags = chaz_CC_new_cflags();
+    chaz_CFlags_append(link_flags, "-Wl,-alias_list");
+    chaz_CFlags_append(link_flags, "-Wl,autogen/lucy_aliases.txt");
     if (chaz_CC_msvc_version_num()) {
         chaz_CFlags_append(link_flags, "/nologo");
     }

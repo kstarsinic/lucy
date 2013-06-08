@@ -71,6 +71,7 @@ my $builder = Lucy::Build->new(
     extra_compiler_flags => join( ' ', map { "-DCFP_$_" } qw(
         CFISH TESTCFISH LUCY TESTLUCY
     ) ),
+    extra_linker_flags => "-Wl,-alias_list -Wl,autogen/lucy_aliases.txt",
     add_to_cleanup => [
         qw(
             Lucy-*
