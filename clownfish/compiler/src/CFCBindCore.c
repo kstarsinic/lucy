@@ -353,6 +353,30 @@ S_write_parcel_h(CFCBindCore *self, CFCParcel *parcel) {
     FREEMEM(file_content);
 }
 
+static char*
+S_gen_cfish_thunks() {
+    int offset = 56; // offsetof(cfish_VTable, methods)
+    int max_methods = 256;
+    char *thunks = CFCUtil_strdup("");
+    static const char pattern[] =
+        "CFISH_VISIBLE void\n"
+        "cfish_thunk%d(const void *vself) {\n"
+        "   char *vtable_address = (char*)((cfish_Dummy*)vself)->vtable;\n"
+        "   cfish_method_t method = *((cfish_method_t*)(vtable_address + %d));\n"
+        "   method(vself);\n"
+        "}\n"
+        "\n";
+    char buf[sizeof(pattern) + 32];
+
+    for (int i = 0; i < max_methods; i++) {
+        sprintf(buf, pattern, offset, offset);
+        thunks = CFCUtil_cat(thunks, buf, NULL);
+        offset += 8; // sizeof(void*)
+    }
+
+    return thunks;
+}
+
 static void
 S_write_parcel_c(CFCBindCore *self, CFCParcel *parcel) {
     S_write_aliases_txt(self, parcel); // hack
@@ -367,6 +391,11 @@ S_write_parcel_c(CFCBindCore *self, CFCParcel *parcel) {
     char *vt_specs = CFCUtil_strdup(
         "static cfish_VTableSpec vtable_specs[] = {\n");
     int num_specs = 0;
+    if (strcmp(prefix, "cfish_") == 0) {
+        char *thunks = S_gen_cfish_thunks();
+        c_data = CFCUtil_cat(c_data, thunks, NULL);
+        FREEMEM(thunks);
+    }
     CFCClass **ordered  = CFCHierarchy_ordered_classes(hierarchy);
     for (int i = 0; ordered[i] != NULL; i++) {
         CFCClass *klass = ordered[i];
