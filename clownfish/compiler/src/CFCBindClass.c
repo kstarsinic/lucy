@@ -229,6 +229,25 @@ S_to_c_header_dynamic(CFCBindClass *self) {
 }
 
 char*
+CFCBindClass_method_aliases(CFCBindClass *self) {
+    int offset = 56; // offsetof(cfish_VTable, methods)
+    CFCMethod **methods  = CFCClass_methods(self->client);
+    char *aliases = CFCUtil_strdup("");
+
+    for (int meth_num = 0; methods[meth_num] != NULL; meth_num++) {
+        offset += 8; // sizeof(void*)
+        CFCMethod *method = methods[meth_num];
+        char *full_meth_sym = CFCMethod_full_method_sym(method, self->client);
+        char *line = CFCUtil_sprintf("_cfish_thunk%d _%s\n", offset,
+                                     full_meth_sym);
+        aliases = CFCUtil_cat(aliases, line, NULL);
+        FREEMEM(line);
+        FREEMEM(full_meth_sym);
+    }
+    return aliases;
+}
+
+char*
 CFCBindClass_to_c_data(CFCBindClass *self) {
     CFCClass *client = self->client;
 

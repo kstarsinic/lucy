@@ -127,6 +127,33 @@ CFCBindCore_write_all_modified(CFCBindCore *self, int modified) {
     return modified;
 }
 
+static void
+S_write_aliases_txt(CFCBindCore *self, CFCParcel *parcel) {
+    const char *prefix = CFCParcel_get_prefix(parcel);
+    char *file_content = CFCUtil_strdup("");
+    char *typedefs = CFCUtil_strdup("");
+    CFCClass **ordered = CFCHierarchy_ordered_classes(self->hierarchy);
+    for (int i = 0; ordered[i] != NULL; i++) {
+        CFCClass *klass = ordered[i];
+        if (!CFCClass_inert(klass)) {
+            CFCBindClass *class_binding = CFCBindClass_new(klass);
+            char *aliases = CFCBindClass_method_aliases(class_binding);
+            file_content = CFCUtil_cat(file_content, aliases, NULL);
+            FREEMEM(aliases);
+        }
+    }
+    FREEMEM(ordered);
+
+    // Unlink then write file.
+    const char *dest = CFCHierarchy_get_dest(self->hierarchy);
+    char *filepath = CFCUtil_sprintf("%s" CHY_DIR_SEP "%saliases.txt", dest,
+                                     prefix);
+    remove(filepath);
+    CFCUtil_write_file(filepath, file_content, strlen(file_content));
+    FREEMEM(filepath);
+    FREEMEM(file_content);
+}
+
 /* Write the "parcel.h" header file, which contains common symbols needed by
  * all classes, plus typedefs for all class structs.
  */
@@ -328,6 +355,8 @@ S_write_parcel_h(CFCBindCore *self, CFCParcel *parcel) {
 
 static void
 S_write_parcel_c(CFCBindCore *self, CFCParcel *parcel) {
+    S_write_aliases_txt(self, parcel); // hack
+
     CFCHierarchy *hierarchy = self->hierarchy;
     const char   *prefix    = CFCParcel_get_prefix(parcel);
 
