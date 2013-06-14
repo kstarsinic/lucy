@@ -154,6 +154,26 @@ S_write_aliases_txt(CFCBindCore *self, CFCParcel *parcel) {
     FREEMEM(file_content);
 }
 
+static char*
+S_gen_cfish_thunk_declarations() {
+    int offset = 56; // offsetof(cfish_VTable, methods)
+    int max_methods = 256;
+    char *thunks = CFCUtil_strdup("\n");
+    static const char pattern[] =
+        "CFISH_VISIBLE void\n"
+        "cfish_thunk%d(const void *vself);\n"
+        "\n";
+    char buf[sizeof(pattern) + 32];
+
+    for (int i = 0; i < max_methods; i++) {
+        sprintf(buf, pattern, offset);
+        thunks = CFCUtil_cat(thunks, buf, NULL);
+        offset += 8; // sizeof(void*)
+    }
+
+    return thunks;
+}
+
 /* Write the "parcel.h" header file, which contains common symbols needed by
  * all classes, plus typedefs for all class structs.
  */
@@ -295,6 +315,10 @@ S_write_parcel_h(CFCBindCore *self, CFCParcel *parcel) {
         FREEMEM(dep_parcels);
     }
 
+    char *thunk_decs = (strcmp(prefix, "cfish_") == 0)
+                       ? S_gen_cfish_thunk_declarations()
+                       : CFCUtil_strdup("");
+
     const char pattern[] =
         "%s\n"
         "#ifndef CFISH_%sPARCEL_H\n"
@@ -316,6 +340,7 @@ S_write_parcel_h(CFCBindCore *self, CFCParcel *parcel) {
         "%s" // Typedefs.
         "\n"
         "%s" // Extra definitions.
+        "%s" // Thunk declarations.
         "%sVISIBLE void\n"
         "%sbootstrap_inheritance();\n"
         "\n"
@@ -336,8 +361,8 @@ S_write_parcel_h(CFCBindCore *self, CFCParcel *parcel) {
     char *file_content
         = CFCUtil_sprintf(pattern, self->header, PREFIX, PREFIX,
                           extra_includes, privacy_sym, PREFIX, PREFIX,
-                          typedefs, extra_defs, PREFIX, prefix, PREFIX, prefix,
-                          prefix, PREFIX, self->footer);
+                          typedefs, extra_defs, thunk_decs, PREFIX, prefix,
+                          PREFIX, prefix, prefix, PREFIX, self->footer);
 
     // Unlink then write file.
     const char *inc_dest = CFCHierarchy_get_include_dest(hierarchy);
@@ -350,6 +375,7 @@ S_write_parcel_h(CFCBindCore *self, CFCParcel *parcel) {
     FREEMEM(charmony_defines);
     FREEMEM(typedefs);
     FREEMEM(extra_includes);
+    FREEMEM(thunk_decs);
     FREEMEM(file_content);
 }
 
