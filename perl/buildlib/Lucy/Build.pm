@@ -20,6 +20,10 @@ use lib '../clownfish/compiler/perl/blib/arch';
 use lib '../clownfish/compiler/perl/blib/lib';
 use lib 'clownfish/compiler/perl/blib/arch';
 use lib 'clownfish/compiler/perl/blib/lib';
+use lib '../clownfish/runtime/perl/blib/arch';
+use lib '../clownfish/runtime/perl/blib/lib';
+use lib 'clownfish/runtime/perl/blib/arch';
+use lib 'clownfish/runtime/perl/blib/lib';
 
 package Lucy::Build;
 
@@ -164,17 +168,6 @@ sub ACTION_clownfish {
     $self->dispatch('cfr');
 
     $self->SUPER::ACTION_clownfish;
-}
-
-sub ACTION_test {
-    my $self = shift;
-
-    # Add blib dirs of Clownfish runtime to @INC
-    local @INC = @INC;
-    push( @INC, catdir( $CFR_DIR, qw( blib lib ) ) );
-    push( @INC, catdir( $CFR_DIR, qw( blib arch ) ) );
-
-    $self->SUPER::ACTION_test;
 }
 
 sub ACTION_suppressions {

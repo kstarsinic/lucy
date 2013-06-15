@@ -20,11 +20,39 @@ our $VERSION = '0.003000';
 $VERSION = eval $VERSION;
 
 sub bind_all {
-    my $class = shift;
+    my ($class, $hierarchy) = @_;
+    $class->inherit_metadata($hierarchy);
     $class->bind_lucy;
     $class->bind_test;
     $class->bind_testschema;
     $class->bind_bbsortex;
+}
+
+sub inherit_metadata {
+    my ($class, $hierarchy) = @_;
+
+    require Clownfish;
+
+    for my $class (@{ $hierarchy->ordered_classes }) {
+        next if $class->get_parcel->get_name ne 'Clownfish' || $class->inert;
+
+        my $class_name = $class->get_class_name;
+        my $vtable     = Clownfish::VTable->fetch_vtable($class_name);
+
+        for my $rt_method (@{ $vtable->get_methods }) {
+            if ($rt_method->is_excluded_from_host) {
+                my $method = $class->method($rt_method->get_name);
+                $method->exclude_from_host;
+            }
+            else {
+                my $alias = $rt_method->get_host_alias;
+                if (defined($alias)) {
+                    my $method = $class->method($rt_method->get_name);
+                    $method->set_host_alias($alias);
+                }
+            }
+        }
+    }
 }
 
 sub bind_lucy {
