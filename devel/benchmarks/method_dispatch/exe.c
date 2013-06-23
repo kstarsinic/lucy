@@ -6,8 +6,9 @@
 #include "dso.h"
 
 #define CPUFREQ    UINT64_C(2800000000)
-#define ITERATIONS UINT64_C(1000000000)
 #define NOINLINE   __attribute__ ((noinline))
+uint64_t iterations;
+#define ITERATIONS iterations
 
 static inline method_t
 Obj_Hello_PTR(obj_t *obj) {
@@ -92,6 +93,13 @@ call_with_thunk(obj_t *obj) {
 }
 #endif
 
+void
+loop_with_simulated_inline(obj_t *obj) {
+    for (uint64_t i = 0; i < ITERATIONS; ++i) {
+        obj->value++;
+    }
+}
+
 static void
 bench(method_t fn, const char *name) {
     obj_t *obj = Obj_new();
@@ -116,7 +124,13 @@ bench(method_t fn, const char *name) {
 }
 
 int
-main() {
+main(int argc, char **argv) {
+    if (argc > 1) {
+        iterations = strtoll(argv[1], NULL, 10);
+    }
+    else {
+        iterations = UINT64_C(1000000000);
+    }
     bootstrap();
 
     bench(loop_with_method_ptr, "method ptr loop");
@@ -130,6 +144,7 @@ main() {
     bench(call_with_thunk, "thunk");
     bench(call_with_thunk_ptr, "thunk ptr");
 #endif
+    bench(loop_with_simulated_inline, "simulated inline");
 
     return 0;
 }
