@@ -60,41 +60,44 @@ HLWriter_init(HighlightWriter *self, Schema *schema, Snapshot *snapshot,
 
 void
 HLWriter_destroy(HighlightWriter *self) {
-    DECREF(self->dat_out);
-    DECREF(self->ix_out);
+    HighlightWriterIVARS *const ivars = HLWriter_IVARS(self);
+    DECREF(ivars->dat_out);
+    DECREF(ivars->ix_out);
     SUPER_DESTROY(self, HIGHLIGHTWRITER);
 }
 
 static OutStream*
 S_lazy_init(HighlightWriter *self) {
-    if (!self->dat_out) {
-        Segment  *segment  = self->segment;
-        Folder   *folder   = self->folder;
+    HighlightWriterIVARS *const ivars = HLWriter_IVARS(self);
+    if (!ivars->dat_out) {
+        Segment  *segment  = ivars->segment;
+        Folder   *folder   = ivars->folder;
         CharBuf  *seg_name = Seg_Get_Name(segment);
 
         // Open outstreams.
         CharBuf *ix_file = CB_newf("%o/highlight.ix", seg_name);
-        self->ix_out = Folder_Open_Out(folder, ix_file);
+        ivars->ix_out = Folder_Open_Out(folder, ix_file);
         DECREF(ix_file);
-        if (!self->ix_out) { RETHROW(INCREF(Err_get_error())); }
+        if (!ivars->ix_out) { RETHROW(INCREF(Err_get_error())); }
 
         CharBuf *dat_file = CB_newf("%o/highlight.dat", seg_name);
-        self->dat_out = Folder_Open_Out(folder, dat_file);
+        ivars->dat_out = Folder_Open_Out(folder, dat_file);
         DECREF(dat_file);
-        if (!self->dat_out) { RETHROW(INCREF(Err_get_error())); }
+        if (!ivars->dat_out) { RETHROW(INCREF(Err_get_error())); }
 
         // Go past invalid doc 0.
-        OutStream_Write_I64(self->ix_out, 0);
+        OutStream_Write_I64(ivars->ix_out, 0);
     }
 
-    return self->dat_out;
+    return ivars->dat_out;
 }
 
 void
 HLWriter_add_inverted_doc(HighlightWriter *self, Inverter *inverter,
                           int32_t doc_id) {
+    HighlightWriterIVARS *const ivars = HLWriter_IVARS(self);
     OutStream *dat_out = S_lazy_init(self);
-    OutStream *ix_out  = self->ix_out;
+    OutStream *ix_out  = ivars->ix_out;
     int64_t    filepos = OutStream_Tell(dat_out);
     uint32_t num_highlightable = 0;
     int32_t expected = (int32_t)(OutStream_Tell(ix_out) / 8);
@@ -207,6 +210,7 @@ HLWriter_tv_buf(HighlightWriter *self, Inversion *inversion) {
 void
 HLWriter_add_segment(HighlightWriter *self, SegReader *reader,
                      I32Array *doc_map) {
+    HighlightWriterIVARS *const ivars = HLWriter_IVARS(self);
     int32_t doc_max = SegReader_Doc_Max(reader);
 
     if (doc_max == 0) {
@@ -219,7 +223,7 @@ HLWriter_add_segment(HighlightWriter *self, SegReader *reader,
                   SegReader_Obtain(reader, VTable_Get_Name(HIGHLIGHTREADER)),
                   DEFAULTHIGHLIGHTREADER);
         OutStream *dat_out = S_lazy_init(self);
-        OutStream *ix_out  = self->ix_out;
+        OutStream *ix_out  = ivars->ix_out;
         int32_t    orig;
         ByteBuf   *bb = BB_new(0);
 
@@ -244,16 +248,17 @@ HLWriter_add_segment(HighlightWriter *self, SegReader *reader,
 
 void
 HLWriter_finish(HighlightWriter *self) {
-    if (self->dat_out) {
+    HighlightWriterIVARS *const ivars = HLWriter_IVARS(self);
+    if (ivars->dat_out) {
         // Write one final file pointer, so that we can derive the length of
         // the last record.
-        int64_t end = OutStream_Tell(self->dat_out);
-        OutStream_Write_I64(self->ix_out, end);
+        int64_t end = OutStream_Tell(ivars->dat_out);
+        OutStream_Write_I64(ivars->ix_out, end);
 
         // Close down the output streams.
-        OutStream_Close(self->dat_out);
-        OutStream_Close(self->ix_out);
-        Seg_Store_Metadata_Str(self->segment, "highlight", 9,
+        OutStream_Close(ivars->dat_out);
+        OutStream_Close(ivars->ix_out);
+        Seg_Store_Metadata_Str(ivars->segment, "highlight", 9,
                                (Obj*)HLWriter_Metadata(self));
     }
 }
