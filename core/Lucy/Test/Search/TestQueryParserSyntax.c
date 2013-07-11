@@ -397,7 +397,7 @@ test_query_parser_syntax(TestBatchRunner *runner) {
 
     for (uint32_t i = 0; leaf_test_funcs[i] != NULL; i++) {
         Lucy_TestQPSyntax_Test_t test_func = leaf_test_funcs[i];
-        TestQueryParser *test_case = test_func();
+        TestQueryParserIVARS *test_case = TestQP_IVARS(test_func());
         Query *tree     = QParser_Tree(qparser, test_case->query_string);
         Query *expanded = QParser_Expand_Leaf(qparser, test_case->tree);
         Query *parsed   = QParser_Parse(qparser, test_case->query_string);
@@ -418,7 +418,7 @@ test_query_parser_syntax(TestBatchRunner *runner) {
 
     for (uint32_t i = 0; syntax_test_funcs[i] != NULL; i++) {
         Lucy_TestQPSyntax_Test_t test_func = syntax_test_funcs[i];
-        TestQueryParser *test_case = test_func();
+        TestQueryParserIVARS *test_case = TestQP_IVARS(test_func());
         Query *tree   = QParser_Tree(qparser, test_case->query_string);
         Query *parsed = QParser_Parse(qparser, test_case->query_string);
         Hits  *hits   = IxSearcher_Hits(searcher, (Obj*)parsed, 0, 10, NULL);

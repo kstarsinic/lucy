@@ -899,7 +899,7 @@ TestQPLogic_run(TestQueryParserLogic *self, TestBatchRunner *runner) {
     // Run logical tests with default boolop of OR.
     for (i = 0; logical_test_funcs[i] != NULL; i++) {
         Lucy_TestQPLogic_Logical_Test_t test_func = logical_test_funcs[i];
-        TestQueryParser *test_case = test_func(BOOLOP_OR);
+        TestQueryParserIVARS *test_case = TestQP_IVARS(test_func(BOOLOP_OR));
         Query *tree     = QParser_Tree(or_parser, test_case->query_string);
         Query *parsed   = QParser_Parse(or_parser, test_case->query_string);
         Hits  *hits     = IxSearcher_Hits(searcher, (Obj*)parsed, 0, 10, NULL);
@@ -917,7 +917,7 @@ TestQPLogic_run(TestQueryParserLogic *self, TestBatchRunner *runner) {
     // Run logical tests with default boolop of AND.
     for (i = 0; logical_test_funcs[i] != NULL; i++) {
         Lucy_TestQPLogic_Logical_Test_t test_func = logical_test_funcs[i];
-        TestQueryParser *test_case = test_func(BOOLOP_AND);
+        TestQueryParserIVARS *test_case = TestQP_IVARS(test_func(BOOLOP_AND));
         Query *tree     = QParser_Tree(and_parser, test_case->query_string);
         Query *parsed   = QParser_Parse(and_parser, test_case->query_string);
         Hits  *hits     = IxSearcher_Hits(searcher, (Obj*)parsed, 0, 10, NULL);
@@ -935,7 +935,7 @@ TestQPLogic_run(TestQueryParserLogic *self, TestBatchRunner *runner) {
     // Run tests for QParser_Prune().
     for (i = 0; prune_test_funcs[i] != NULL; i++) {
         Lucy_TestQPLogic_Prune_Test_t test_func = prune_test_funcs[i];
-        TestQueryParser *test_case = test_func();
+        TestQueryParserIVARS *test_case = TestQP_IVARS(test_func());
         CharBuf *qstring = test_case->tree
                            ? Query_To_String(test_case->tree)
                            : CB_new_from_trusted_utf8("(NULL)", 6);
