@@ -151,12 +151,13 @@ Inversion_invert(Inversion *self) {
 
     // Assign token positions.
     for (; tokens < limit; tokens++) {
-        Token *const cur_token = *tokens;
-        cur_token->pos = token_pos;
-        token_pos = (int32_t)((uint32_t)token_pos + (uint32_t)cur_token->pos_inc);
-        if (token_pos < cur_token->pos) {
+        TokenIVARS *const cur_token_ivars = Token_IVARS(*tokens);
+        cur_token_ivars->pos = token_pos;
+        token_pos = (int32_t)((uint32_t)token_pos
+                              + (uint32_t)cur_token_ivars->pos_inc);
+        if (token_pos < cur_token_ivars->pos) {
             THROW(ERR, "Token positions out of order: %i32 %i32",
-                  cur_token->pos, token_pos);
+                  cur_token_ivars->pos, token_pos);
         }
     }
 
@@ -178,17 +179,16 @@ S_count_clusters(Inversion *self, InversionIVARS *ivars) {
     ivars->cluster_counts = counts;
 
     for (uint32_t i = 0; i < ivars->size;) {
-        Token *const base_token = tokens[i];
-        char  *const base_text  = base_token->text;
-        const size_t base_len   = base_token->len;
+        TokenIVARS *const base_token_ivars = Token_IVARS(tokens[i]);
+        char  *const base_text  = base_token_ivars->text;
+        const size_t base_len   = base_token_ivars->len;
         uint32_t     j          = i + 1;
 
         // Iterate through tokens until text doesn't match.
         while (j < ivars->size) {
-            Token *const candidate = tokens[j];
-
-            if ((candidate->len == base_len)
-                && (memcmp(candidate->text, base_text, base_len) == 0)
+            TokenIVARS *const candidate_ivars = Token_IVARS(tokens[j]);
+            if ((candidate_ivars->len == base_len)
+                && (memcmp(candidate_ivars->text, base_text, base_len) == 0)
                ) {
                 j++;
             }
