@@ -198,15 +198,16 @@ S_find_endpost(SortExternal *self, SortExternalIVARS *ivars) {
     for (uint32_t i = 0, max = VA_Get_Size(ivars->runs); i < max; i++) {
         // Get a run and retrieve the last item in its cache.
         SortExternal *const run = (SortExternal*)VA_Fetch(ivars->runs, i);
-        const uint32_t tick = run->cache_max - 1;
-        if (tick >= run->cache_cap || run->cache_max < 1) {
+        SortExternalIVARS *const run_ivars = SortEx_IVARS(run);
+        const uint32_t tick = run_ivars->cache_max - 1;
+        if (tick >= run_ivars->cache_cap || run_ivars->cache_max < 1) {
             THROW(ERR, "Invalid SortExternal cache access: %u32 %u32 %u32", tick,
-                  run->cache_max, run->cache_cap);
+                  run_ivars->cache_max, run_ivars->cache_cap);
         }
         else {
             // Cache item with the highest sort value currently held in memory
             // by the run.
-            uint8_t *candidate = run->cache + tick * width;
+            uint8_t *candidate = run_ivars->cache + tick * width;
 
             // If it's the first run, item is automatically the new endpost.
             if (i == 0) {
@@ -249,9 +250,9 @@ S_absorb_slices(SortExternal *self, SortExternalIVARS *ivars,
                 SortEx_Grow_Cache(self, cap);
             }
             memcpy(ivars->cache + ivars->cache_max * width,
-                   run->cache + run->cache_tick * width,
+                   run_ivars->cache + run_ivars->cache_tick * width,
                    slice_size * width);
-            run->cache_tick += slice_size;
+            run_ivars->cache_tick += slice_size;
             ivars->cache_max += slice_size;
 
             // Track number of slices and slice sizes.
