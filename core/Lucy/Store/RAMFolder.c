@@ -186,7 +186,8 @@ S_rename_or_hard_link(RAMFolder *self, const CharBuf* from, const CharBuf *to,
     }
 
     // Find the original element.
-    elem = Hash_Fetch(inner_from_folder->entries, (Obj*)from_name);
+    elem = Hash_Fetch(RAMFolder_IVARS(inner_from_folder)->entries,
+                      (Obj*)from_name);
     if (!elem) {
         if (Folder_Is_A(from_folder, COMPOUNDFILEREADER)
             && Folder_Local_Exists(from_folder, (CharBuf*)from_name)
@@ -202,7 +203,8 @@ S_rename_or_hard_link(RAMFolder *self, const CharBuf* from, const CharBuf *to,
 
     // Execute the rename/hard-link.
     if (op == OP_RENAME) {
-        Obj *existing = Hash_Fetch(inner_to_folder->entries, (Obj*)to_name);
+        Obj *existing = Hash_Fetch(RAMFolder_IVARS(inner_to_folder)->entries,
+                                   (Obj*)to_name);
         if (existing) {
             bool conflict = false;
 
@@ -234,8 +236,10 @@ S_rename_or_hard_link(RAMFolder *self, const CharBuf* from, const CharBuf *to,
 
         // Perform the store first, then the delete. Inform Folder objects
         // about the relocation.
-        Hash_Store(inner_to_folder->entries, (Obj*)to_name, INCREF(elem));
-        DECREF(Hash_Delete(inner_from_folder->entries, (Obj*)from_name));
+        Hash_Store(RAMFolder_IVARS(inner_to_folder)->entries,
+                   (Obj*)to_name, INCREF(elem));
+        DECREF(Hash_Delete(RAMFolder_IVARS(inner_from_folder)->entries,
+                           (Obj*)from_name));
         if (Obj_Is_A(elem, FOLDER)) {
             CharBuf *newpath = S_fullpath(inner_to_folder, (CharBuf*)to_name);
             Folder_Set_Path((Folder*)elem, newpath);
@@ -250,14 +254,15 @@ S_rename_or_hard_link(RAMFolder *self, const CharBuf* from, const CharBuf *to,
         }
         else {
             Obj *existing
-                = Hash_Fetch(inner_to_folder->entries, (Obj*)to_name);
+                = Hash_Fetch(RAMFolder_IVARS(inner_to_folder)->entries,
+                             (Obj*)to_name);
             if (existing) {
                 Err_set_error(Err_new(CB_newf("'%o' already exists", to)));
                 return false;
             }
             else {
-                Hash_Store(inner_to_folder->entries, (Obj*)to_name,
-                           INCREF(elem));
+                Hash_Store(RAMFolder_IVARS(inner_to_folder)->entries,
+                           (Obj*)to_name, INCREF(elem));
             }
         }
     }
@@ -312,7 +317,7 @@ RAMFolder_local_delete(RAMFolder *self, const CharBuf *name) {
             else {
                 inner_folder = (RAMFolder*)CERTIFY(entry, RAMFOLDER);
             }
-            if (Hash_Get_Size(inner_folder->entries)) {
+            if (Hash_Get_Size(RAMFolder_IVARS(inner_folder)->entries)) {
                 // Can't delete non-empty dir.
                 return false;
             }
