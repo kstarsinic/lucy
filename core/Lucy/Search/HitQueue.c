@@ -125,7 +125,8 @@ HitQ_jostle(HitQueue *self, Obj *element) {
     HitQ_Jostle_t super_jostle
         = SUPER_METHOD_PTR(HITQUEUE, Lucy_HitQ_Jostle);
     if (ivars->need_values) {
-        CERTIFY(match_doc->values, VARRAY);
+        MatchDocIVARS *const match_doc_ivars = MatchDoc_IVARS(match_doc);
+        CERTIFY(match_doc_ivars->values, VARRAY);
     }
     return super_jostle(self, element);
 }

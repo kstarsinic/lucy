@@ -268,21 +268,23 @@ PhraseMatcher_calc_phrase_freq(PhraseMatcher *self) {
      * is our phrase freq.
      */
     ScorePosting *posting = (ScorePosting*)PList_Get_Posting(plists[0]);
-    uint32_t anchors_remaining = posting->freq;
+    ScorePostingIVARS *const post_ivars = ScorePost_IVARS(posting);
+    uint32_t anchors_remaining = post_ivars->freq;
     if (!anchors_remaining) { return 0.0f; }
 
     size_t    amount        = anchors_remaining * sizeof(uint32_t);
     uint32_t *anchors_start = (uint32_t*)BB_Grow(ivars->anchor_set, amount);
     uint32_t *anchors_end   = anchors_start + anchors_remaining;
-    memcpy(anchors_start, posting->prox, amount);
+    memcpy(anchors_start, post_ivars->prox, amount);
 
     // Match the positions of other terms against the anchor set.
     for (uint32_t i = 1, max = ivars->num_elements; i < max; i++) {
         // Get the array of positions for the next term.  Unlike the anchor
         // set (which is a copy), these won't be overwritten.
-        ScorePosting *posting = (ScorePosting*)PList_Get_Posting(plists[i]);
-        uint32_t *candidates_start = posting->prox;
-        uint32_t *candidates_end   = candidates_start + posting->freq;
+        ScorePosting *next_post = (ScorePosting*)PList_Get_Posting(plists[i]);
+        ScorePostingIVARS *const next_post_ivars = ScorePost_IVARS(next_post);
+        uint32_t *candidates_start = next_post_ivars->prox;
+        uint32_t *candidates_end   = candidates_start + next_post_ivars->freq;
 
         // Splice out anchors that don't match the next term.  Bail out if
         // we've eliminated all possible anchors.
@@ -310,7 +312,7 @@ PhraseMatcher_score(PhraseMatcher *self) {
     ScorePosting *posting = (ScorePosting*)PList_Get_Posting(ivars->plists[0]);
     float score = Sim_TF(ivars->sim, ivars->phrase_freq)
                   * ivars->weight
-                  * posting->weight;
+                  * ScorePost_IVARS(posting)->weight;
     return score;
 }
 

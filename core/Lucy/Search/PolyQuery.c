@@ -110,14 +110,15 @@ PolyCompiler*
 PolyCompiler_init(PolyCompiler *self, PolyQuery *parent,
                   Searcher *searcher, float boost) {
     PolyCompilerIVARS *const ivars = PolyCompiler_IVARS(self);
-    const uint32_t num_kids = VA_Get_Size(parent->children);
+    PolyQueryIVARS *const parent_ivars = PolyQuery_IVARS(parent);
+    const uint32_t num_kids = VA_Get_Size(parent_ivars->children);
 
     Compiler_init((Compiler*)self, (Query*)parent, searcher, NULL, boost);
     ivars->children = VA_new(num_kids);
 
     // Iterate over the children, creating a Compiler for each one.
     for (uint32_t i = 0; i < num_kids; i++) {
-        Query *child_query = (Query*)VA_Fetch(parent->children, i);
+        Query *child_query = (Query*)VA_Fetch(parent_ivars->children, i);
         float sub_boost = boost * Query_Get_Boost(child_query);
         Compiler *child_compiler
             = Query_Make_Compiler(child_query, searcher, sub_boost, true);

@@ -95,7 +95,8 @@ NoMatchQuery_load(NoMatchQuery *self, Obj *dump) {
         = SUPER_METHOD_PTR(NOMATCHQUERY, Lucy_NoMatchQuery_Load);
     NoMatchQuery *loaded = super_load(self, dump);
     Obj *fails = Cfish_Hash_Fetch_Str(source, "fails_to_match", 14);
-    loaded->fails_to_match = fails ? Obj_To_Bool(fails) : true;
+    NoMatchQuery_IVARS(loaded)->fails_to_match
+        = fails ? Obj_To_Bool(fails) : true;
     return loaded;
 }
 
