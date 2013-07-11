@@ -96,7 +96,8 @@ void
 RawPostWriter_start_term(RawPostingWriter *self, TermInfo *tinfo) {
     RawPostingWriterIVARS *const ivars = RawPostWriter_IVARS(self);
     ivars->last_doc_id   = 0;
-    tinfo->post_filepos = OutStream_Tell(ivars->outstream);
+    TermInfoIVARS *const tinfo_ivars = TInfo_IVARS(tinfo);
+    tinfo_ivars->post_filepos = OutStream_Tell(ivars->outstream);
 }
 
 void
@@ -122,14 +123,14 @@ RawPostWriter_write_posting(RawPostingWriter *self, RawPosting *posting) {
     const uint32_t   delta_doc   = doc_id - ivars->last_doc_id;
     char  *const     aux_content = posting_ivars->blob
                                    + posting_ivars->content_len;
-    if (posting->freq == 1) {
+    if (posting_ivars->freq == 1) {
         const uint32_t doc_code = (delta_doc << 1) | 1;
         OutStream_Write_C32(outstream, doc_code);
     }
     else {
         const uint32_t doc_code = delta_doc << 1;
         OutStream_Write_C32(outstream, doc_code);
-        OutStream_Write_C32(outstream, posting->freq);
+        OutStream_Write_C32(outstream, posting_ivars->freq);
     }
     OutStream_Write_Bytes(outstream, aux_content, posting_ivars->aux_len);
     ivars->last_doc_id = doc_id;

@@ -43,8 +43,8 @@
 #include "Lucy/Store/OutStream.h"
 #include "Lucy/Util/MemoryPool.h"
 
-#define MAX_RAW_POSTING_LEN(_text_len) \
-    (              sizeof(RawPosting) \
+#define MAX_RAW_POSTING_LEN(_raw_post_size, _text_len) \
+    (              _raw_post_size \
                    + _text_len + 1            /* term text content */ \
     )
 
@@ -105,7 +105,8 @@ MatchPost_read_raw(MatchPosting *self, InStream *instream, int32_t last_doc_id,
     const uint32_t freq      = (doc_code & 1)
                                ? 1
                                : InStream_Read_C32(instream);
-    size_t raw_post_bytes    = MAX_RAW_POSTING_LEN(text_size);
+    const size_t base_size    = VTable_Get_Obj_Alloc_Size(RAWPOSTING);
+    size_t raw_post_bytes    = MAX_RAW_POSTING_LEN(base_size, text_size);
     void *const allocation   = MemPool_Grab(mem_pool, raw_post_bytes);
     UNUSED_VAR(self);
 
@@ -118,6 +119,7 @@ MatchPost_add_inversion_to_pool(MatchPosting *self, PostingPool *post_pool,
                                 int32_t doc_id, float doc_boost,
                                 float length_norm) {
     MemoryPool  *mem_pool = PostPool_Get_Mem_Pool(post_pool);
+    const size_t base_size = VTable_Get_Obj_Alloc_Size(RAWPOSTING);
     Token      **tokens;
     uint32_t     freq;
 
@@ -129,7 +131,8 @@ MatchPost_add_inversion_to_pool(MatchPosting *self, PostingPool *post_pool,
     Inversion_Reset(inversion);
     while ((tokens = Inversion_Next_Cluster(inversion, &freq)) != NULL) {
         TokenIVARS *const token_ivars = Token_IVARS(*tokens);
-        uint32_t raw_post_bytes = MAX_RAW_POSTING_LEN(token_ivars->len);
+        uint32_t raw_post_bytes
+            = MAX_RAW_POSTING_LEN(base_size, token_ivars->len);
         RawPosting *raw_posting
             = RawPost_new(MemPool_Grab(mem_pool, raw_post_bytes), doc_id,
                           freq, token_ivars->text, token_ivars->len);

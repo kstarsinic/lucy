@@ -35,8 +35,8 @@
 
 #define FIELD_BOOST_LEN  1
 #define FREQ_MAX_LEN     C32_MAX_BYTES
-#define MAX_RAW_POSTING_LEN(_text_len, _freq) \
-    (              sizeof(RawPosting) \
+#define MAX_RAW_POSTING_LEN(_raw_post_size, _text_len, _freq) \
+    (              _raw_post_size \
                    + _text_len                /* term text content */ \
                    + FIELD_BOOST_LEN          /* field boost byte */ \
                    + FREQ_MAX_LEN             /* freq c32 */ \
@@ -83,13 +83,15 @@ ScorePost_add_inversion_to_pool(ScorePosting *self, PostingPool *post_pool,
     Similarity     *sim = ivars->sim;
     float           field_boost = doc_boost * FType_Get_Boost(type) * length_norm;
     const uint8_t   field_boost_byte  = Sim_Encode_Norm(sim, field_boost);
+    const size_t    base_size = VTable_Get_Obj_Alloc_Size(RAWPOSTING);
     Token         **tokens;
     uint32_t        freq;
 
     Inversion_Reset(inversion);
     while ((tokens = Inversion_Next_Cluster(inversion, &freq)) != NULL) {
         TokenIVARS *const token_ivars = Token_IVARS(*tokens);
-        uint32_t raw_post_bytes = MAX_RAW_POSTING_LEN(token_ivars->len, freq);
+        uint32_t raw_post_bytes
+            = MAX_RAW_POSTING_LEN(base_size, token_ivars->len, freq);
         RawPosting *raw_posting
             = RawPost_new(MemPool_Grab(mem_pool, raw_post_bytes), doc_id,
                           freq, token_ivars->text, token_ivars->len);
@@ -179,7 +181,8 @@ ScorePost_read_raw(ScorePosting *self, InStream *instream,
     const uint32_t freq           = (doc_code & 1)
                                     ? 1
                                     : InStream_Read_C32(instream);
-    size_t raw_post_bytes         = MAX_RAW_POSTING_LEN(text_size, freq);
+    const size_t base_size        = VTable_Get_Obj_Alloc_Size(RAWPOSTING);
+    size_t raw_post_bytes         = MAX_RAW_POSTING_LEN(base_size, text_size, freq);
     void *const allocation        = MemPool_Grab(mem_pool, raw_post_bytes);
     RawPosting *const raw_posting
         = RawPost_new(allocation, doc_id, freq, text_buf, text_size);
@@ -236,8 +239,9 @@ ScorePostMatcher_init(ScorePostingMatcher *self, Similarity *sim,
 float
 ScorePostMatcher_score(ScorePostingMatcher* self) {
     ScorePostingMatcherIVARS *const ivars = ScorePostMatcher_IVARS(self);
-    ScorePosting *const posting = (ScorePosting*)ivars->posting;
-    const uint32_t freq = posting->freq;
+    ScorePostingIVARS *const posting_ivars
+        = ScorePost_IVARS((ScorePosting*)ivars->posting);
+    const uint32_t freq = posting_ivars->freq;
 
     // Calculate initial score based on frequency of term.
     float score = (freq < TERMMATCHER_SCORE_CACHE_SIZE)
@@ -245,7 +249,7 @@ ScorePostMatcher_score(ScorePostingMatcher* self) {
                   : Sim_TF(ivars->sim, (float)freq) * ivars->weight;
 
     // Factor in field-length normalization and doc/field/prox boost.
-    score *= posting->weight;
+    score *= posting_ivars->weight;
 
     return score;
 }
