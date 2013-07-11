@@ -125,16 +125,16 @@ static void
 S_read_entry(LexIndex *self) {
     LexIndexIVARS *const ivars = LexIndex_IVARS(self);
     InStream *ix_in  = ivars->ix_in;
-    TermInfo *tinfo  = ivars->tinfo;
+    TermInfoIVARS *const tinfo_ivars = TInfo_IVARS(ivars->tinfo);
     int64_t offset = (int64_t)NumUtil_decode_bigend_u64(ivars->offsets + ivars->tick);
     InStream_Seek(ix_in, offset);
     TermStepper_Read_Key_Frame(ivars->term_stepper, ix_in);
-    tinfo->doc_freq     = InStream_Read_C32(ix_in);
-    tinfo->post_filepos = InStream_Read_C64(ix_in);
-    tinfo->skip_filepos = tinfo->doc_freq >= ivars->skip_interval
+    tinfo_ivars->doc_freq     = InStream_Read_C32(ix_in);
+    tinfo_ivars->post_filepos = InStream_Read_C64(ix_in);
+    tinfo_ivars->skip_filepos = tinfo_ivars->doc_freq >= ivars->skip_interval
                           ? InStream_Read_C64(ix_in)
                           : 0;
-    tinfo->lex_filepos  = InStream_Read_C64(ix_in);
+    tinfo_ivars->lex_filepos  = InStream_Read_C64(ix_in);
 }
 
 void

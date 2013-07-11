@@ -88,7 +88,7 @@ Inverter_next(Inverter *self) {
     InverterIVARS *const ivars = Inverter_IVARS(self);
     ivars->current = (InverterEntry*)VA_Fetch(ivars->entries, ++ivars->tick);
     if (!ivars->current) { ivars->current = ivars->blank; } // Exhausted.
-    return ivars->current->field_num;
+    return InvEntry_IVARS(ivars->current)->field_num;
 }
 
 void

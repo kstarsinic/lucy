@@ -138,8 +138,8 @@ PostPool_destroy(PostingPool *self) {
 
 int
 PostPool_compare(PostingPool *self, void *va, void *vb) {
-    RawPosting *const a     = *(RawPosting**)va;
-    RawPosting *const b     = *(RawPosting**)vb;
+    RawPostingIVARS *const a     = RawPost_IVARS(*(RawPosting**)va);
+    RawPostingIVARS *const b     = RawPost_IVARS(*(RawPosting**)vb);
     const size_t      a_len = a->content_len;
     const size_t      b_len = b->content_len;
     const size_t      len   = a_len < b_len ? a_len : b_len;
@@ -199,9 +199,11 @@ PostPool_flip(PostingPool *self) {
                            ivars->mem_pool, ivars->lex_temp_out,
                            ivars->post_temp_out, ivars->skip_out);
         PostPool_Grow_Cache(run, num_items);
-        memcpy(run->cache, ((Obj**)ivars->cache) + ivars->cache_tick,
+        PostingPoolIVARS *const run_ivars = PostPool_IVARS(run);
+
+        memcpy(run_ivars->cache, ((Obj**)ivars->cache) + ivars->cache_tick,
                num_items * sizeof(Obj*));
-        run->cache_max = num_items;
+        run_ivars->cache_max = num_items;
         PostPool_Add_Run(self, (SortExternal*)run);
         ivars->cache_tick = 0;
         ivars->cache_max = 0;
@@ -212,7 +214,7 @@ PostPool_flip(PostingPool *self) {
         PostingPool *run = (PostingPool*)VA_Fetch(ivars->runs, i);
         if (run != NULL) {
             PostPool_Set_Mem_Thresh(run, sub_thresh);
-            if (!run->lexicon) {
+            if (!PostPool_IVARS(run)->lexicon) {
                 S_fresh_flip(run, ivars->lex_temp_in, ivars->post_temp_in);
             }
         }
@@ -247,10 +249,11 @@ PostPool_add_segment(PostingPool *self, SegReader *reader, I32Array *doc_map,
                            ivars->polyreader, ivars->field, ivars->lex_writer,
                            ivars->mem_pool, ivars->lex_temp_out,
                            ivars->post_temp_out, ivars->skip_out);
-        run->lexicon  = lexicon;
-        run->plist    = plist;
-        run->doc_base = doc_base;
-        run->doc_map  = (I32Array*)INCREF(doc_map);
+        PostingPoolIVARS *const run_ivars = PostPool_IVARS(run);
+        run_ivars->lexicon  = lexicon;
+        run_ivars->plist    = plist;
+        run_ivars->doc_base = doc_base;
+        run_ivars->doc_map  = (I32Array*)INCREF(doc_map);
         PostPool_Add_Run(self, (SortExternal*)run);
     }
 }
@@ -297,34 +300,35 @@ PostPool_flush(PostingPool *self) {
                        ivars->polyreader, ivars->field, ivars->lex_writer,
                        ivars->mem_pool, ivars->lex_temp_out,
                        ivars->post_temp_out, ivars->skip_out);
+    PostingPoolIVARS *const run_ivars = PostPool_IVARS(run);
     PostingWriter *post_writer
         = (PostingWriter*)RawPostWriter_new(ivars->schema, ivars->snapshot,
                                             ivars->segment, ivars->polyreader,
                                             ivars->post_temp_out);
 
     // Borrow the cache.
-    run->cache      = ivars->cache;
-    run->cache_tick = ivars->cache_tick;
-    run->cache_max  = ivars->cache_max;
-    run->cache_cap  = ivars->cache_cap;
+    run_ivars->cache      = ivars->cache;
+    run_ivars->cache_tick = ivars->cache_tick;
+    run_ivars->cache_max  = ivars->cache_max;
+    run_ivars->cache_cap  = ivars->cache_cap;
 
     // Write to temp files.
     LexWriter_Enter_Temp_Mode(ivars->lex_writer, ivars->field,
                               ivars->lex_temp_out);
-    run->lex_start  = OutStream_Tell(ivars->lex_temp_out);
-    run->post_start = OutStream_Tell(ivars->post_temp_out);
+    run_ivars->lex_start  = OutStream_Tell(ivars->lex_temp_out);
+    run_ivars->post_start = OutStream_Tell(ivars->post_temp_out);
     PostPool_Sort_Cache(self);
     S_write_terms_and_postings(run, post_writer, NULL);
 
-    run->lex_end  = OutStream_Tell(ivars->lex_temp_out);
-    run->post_end = OutStream_Tell(ivars->post_temp_out);
+    run_ivars->lex_end  = OutStream_Tell(ivars->lex_temp_out);
+    run_ivars->post_end = OutStream_Tell(ivars->post_temp_out);
     LexWriter_Leave_Temp_Mode(ivars->lex_writer);
 
     // Return the cache and empty it.
-    run->cache      = NULL;
-    run->cache_tick = 0;
-    run->cache_max  = 0;
-    run->cache_cap  = 0;
+    run_ivars->cache      = NULL;
+    run_ivars->cache_tick = 0;
+    run_ivars->cache_max  = 0;
+    run_ivars->cache_cap  = 0;
     PostPool_Clear_Cache(self);
 
     // Add the run to the array.
@@ -373,7 +377,8 @@ S_write_terms_and_postings(PostingPool *self, PostingWriter *post_writer,
     RawPosting *posting = (RawPosting*)CERTIFY(
                               (*(RawPosting**)PostPool_Fetch(self)),
                               RAWPOSTING);
-    CB_Mimic_Str(last_term_text, posting->blob, posting->content_len);
+    RawPostingIVARS *post_ivars = RawPost_IVARS(posting);
+    CB_Mimic_Str(last_term_text, post_ivars->blob, post_ivars->content_len);
     char *last_text_buf = (char*)CB_Get_Ptr8(last_term_text);
     uint32_t last_text_size = CB_Get_Size(last_term_text);
     SkipStepper_Set_ID_And_Filepos(skip_stepper, 0, 0);
@@ -393,12 +398,13 @@ S_write_terms_and_postings(PostingPool *self, PostingWriter *post_writer,
             // On the last iter, use an empty string to make LexiconWriter
             // DTRT.
             posting = sentinel;
+            post_ivars = RawPost_IVARS(posting);
             same_text_as_last = false;
         }
         else {
             // Compare once.
-            if (posting->content_len != last_text_size
-                || memcmp(&posting->blob, last_text_buf, last_text_size) != 0
+            if (post_ivars->content_len != last_text_size
+                || memcmp(&post_ivars->blob, last_text_buf, last_text_size) != 0
                ) {
                 same_text_as_last = false;
             }
@@ -420,8 +426,8 @@ S_write_terms_and_postings(PostingPool *self, PostingWriter *post_writer,
             last_skip_filepos     = tinfo_ivars->post_filepos;
 
             // Remember the term_text so we can write string diffs.
-            CB_Mimic_Str(last_term_text, posting->blob,
-                         posting->content_len);
+            CB_Mimic_Str(last_term_text, post_ivars->blob,
+                         post_ivars->content_len);
             last_text_buf  = (char*)CB_Get_Ptr8(last_term_text);
             last_text_size = CB_Get_Size(last_term_text);
         }
@@ -448,7 +454,7 @@ S_write_terms_and_postings(PostingPool *self, PostingWriter *post_writer,
             // Write deltas.
             last_skip_doc               = skip_stepper_ivars->doc_id;
             last_skip_filepos           = skip_stepper_ivars->filepos;
-            skip_stepper_ivars->doc_id  = posting->doc_id;
+            skip_stepper_ivars->doc_id  = post_ivars->doc_id;
             PostWriter_Update_Skip_Info(post_writer, skip_tinfo);
             skip_stepper_ivars->filepos = skip_tinfo_ivars->post_filepos;
             SkipStepper_Write_Record(skip_stepper, skip_stream,
@@ -462,6 +468,7 @@ S_write_terms_and_postings(PostingPool *self, PostingWriter *post_writer,
         posting = address
                   ? *(RawPosting**)address
                   : NULL;
+        post_ivars = RawPost_IVARS(posting);
     }
 
     // Clean up.
@@ -500,8 +507,6 @@ PostPool_refill(PostingPool *self) {
 
 
     while (1) {
-        RawPosting *raw_posting;
-
         if (ivars->post_count == 0) {
             // Read a term.
             if (Lex_Next(lexicon)) {
@@ -526,19 +531,20 @@ PostPool_refill(PostingPool *self) {
         }
 
         // Read a posting from the input stream.
-        raw_posting = PList_Read_Raw(plist, ivars->last_doc_id, term_text,
-                                     mem_pool);
-        ivars->last_doc_id = raw_posting->doc_id;
+        RawPosting *rawpost
+            = PList_Read_Raw(plist, ivars->last_doc_id, term_text, mem_pool);
+        RawPostingIVARS *const rawpost_ivars = RawPost_IVARS(rawpost);
+        ivars->last_doc_id = rawpost_ivars->doc_id;
         ivars->post_count--;
 
         // Skip deletions.
         if (doc_map != NULL) {
             const int32_t remapped
-                = I32Arr_Get(doc_map, raw_posting->doc_id - doc_base);
+                = I32Arr_Get(doc_map, rawpost_ivars->doc_id - doc_base);
             if (!remapped) {
                 continue;
             }
-            raw_posting->doc_id = remapped;
+            rawpost_ivars->doc_id = remapped;
         }
 
         // Add to the run's cache.
@@ -547,7 +553,7 @@ PostPool_refill(PostingPool *self) {
             PostPool_Grow_Cache(self, new_cap);
         }
         Obj **cache = (Obj**)ivars->cache;
-        cache[num_elems] = (Obj*)raw_posting;
+        cache[num_elems] = (Obj*)rawpost;
         num_elems++;
     }
 

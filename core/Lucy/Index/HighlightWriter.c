@@ -155,15 +155,16 @@ HLWriter_tv_buf(HighlightWriter *self, Inversion *inversion) {
     Inversion_Reset(inversion);
     while ((tokens = Inversion_Next_Cluster(inversion, &freq)) != NULL) {
         Token *token = *tokens;
-        int32_t overlap = StrHelp_overlap(last_text, token->text,
-                                          last_len, token->len);
+        TokenIVARS *token_ivars = Token_IVARS(token);
+        int32_t overlap = StrHelp_overlap(last_text, token_ivars->text,
+                                          last_len, token_ivars->len);
         char *ptr;
         char *orig;
         size_t old_size = BB_Get_Size(tv_buf);
         size_t new_size = old_size
                           + C32_MAX_BYTES      // overlap
                           + C32_MAX_BYTES      // length of string diff
-                          + (token->len - overlap) // diff char data
+                          + (token_ivars->len - overlap) // diff char data
                           + C32_MAX_BYTES                // num prox
                           + (C32_MAX_BYTES * freq * 3);  // pos data
 
@@ -177,22 +178,24 @@ HLWriter_tv_buf(HighlightWriter *self, Inversion *inversion) {
 
         // Append the string diff to the tv_buf.
         NumUtil_encode_c32(overlap, &ptr);
-        NumUtil_encode_c32((token->len - overlap), &ptr);
-        memcpy(ptr, (token->text + overlap), (token->len - overlap));
-        ptr += token->len - overlap;
+        NumUtil_encode_c32((token_ivars->len - overlap), &ptr);
+        memcpy(ptr, (token_ivars->text + overlap),
+               (token_ivars->len - overlap));
+        ptr += token_ivars->len - overlap;
 
         // Save text and text_len for comparison next loop.
-        last_text = token->text;
-        last_len  = token->len;
+        last_text = token_ivars->text;
+        last_len  = token_ivars->len;
 
         // Append the number of positions for this term.
         NumUtil_encode_c32(freq, &ptr);
 
         do {
+            token_ivars = Token_IVARS(token);
             // Add position, start_offset, and end_offset to tv_buf.
-            NumUtil_encode_c32(token->pos, &ptr);
-            NumUtil_encode_c32(token->start_offset, &ptr);
-            NumUtil_encode_c32(token->end_offset, &ptr);
+            NumUtil_encode_c32(token_ivars->pos, &ptr);
+            NumUtil_encode_c32(token_ivars->start_offset, &ptr);
+            NumUtil_encode_c32(token_ivars->end_offset, &ptr);
 
         } while (--freq && (token = *++tokens));
 
