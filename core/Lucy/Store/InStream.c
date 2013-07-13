@@ -133,7 +133,8 @@ InStream_reopen(InStream *self, const CharBuf *filename, int64_t offset,
               offset, len, FH_Length(ivars->file_handle));
     }
 
-    InStream *other = (InStream*)VTable_Make_Obj(ivars->vtable);
+    VTable *vtable = InStream_Get_VTable(self);
+    InStream *other = (InStream*)VTable_Make_Obj(vtable);
     InStreamIVARS *const ovars = InStream_IVARS(other);
     InStream_do_open(other, (Obj*)ivars->file_handle);
     if (filename != NULL) { CB_Mimic(ovars->filename, (Obj*)filename); }
@@ -147,7 +148,8 @@ InStream_reopen(InStream *self, const CharBuf *filename, int64_t offset,
 InStream*
 InStream_clone(InStream *self) {
     InStreamIVARS *const ivars = InStream_IVARS(self);
-    InStream *twin = (InStream*)VTable_Make_Obj(ivars->vtable);
+    VTable *vtable = InStream_Get_VTable(self);
+    InStream *twin = (InStream*)VTable_Make_Obj(vtable);
     InStream_do_open(twin, (Obj*)ivars->file_handle);
     InStream_Seek(twin, SI_tell(self));
     return twin;
