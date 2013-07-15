@@ -1,4 +1,4 @@
-CFLAGS = -std=gnu99 -Wextra -O2 -fomit-frame-pointer
+CFLAGS = -std=gnu99 -Wextra -O2 -fomit-frame-pointer -DHAS_ALIAS
 
 all : bench
 

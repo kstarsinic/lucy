@@ -38,6 +38,7 @@ loop_with_wrapper(obj_t *obj) {
     }
 }
 
+#ifdef HAS_ALIAS
 void
 loop_with_thunk(obj_t *obj) {
     for (uint64_t i = 0; i < ITERATIONS; ++i) {
@@ -51,6 +52,7 @@ loop_with_thunk_ptr(obj_t *obj) {
         Obj_Hello_THUNK_PTR(obj);
     }
 }
+#endif
 
 NOINLINE void
 single_call_with_wrapper(obj_t *obj) {
@@ -64,6 +66,7 @@ call_with_wrapper(obj_t *obj) {
     }
 }
 
+#ifdef HAS_ALIAS
 NOINLINE void
 single_call_with_thunk(obj_t *obj) {
     Obj_Hello_THUNK(obj);
@@ -87,6 +90,7 @@ call_with_thunk(obj_t *obj) {
         single_call_with_thunk(obj);
     }
 }
+#endif
 
 static void
 bench(method_t fn, const char *name) {
@@ -117,11 +121,15 @@ main() {
 
     bench(loop_with_method_ptr, "method ptr loop");
     bench(loop_with_wrapper, "wrapper loop");
+#ifdef HAS_ALIAS
     bench(loop_with_thunk, "thunk loop");
     bench(loop_with_thunk_ptr, "thunk ptr loop");
+#endif
     bench(call_with_wrapper, "wrapper");
+#ifdef HAS_ALIAS
     bench(call_with_thunk, "thunk");
     bench(call_with_thunk_ptr, "thunk ptr");
+#endif
 
     return 0;
 }
