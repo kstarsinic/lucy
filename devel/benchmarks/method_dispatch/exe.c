@@ -23,6 +23,13 @@ Obj_Hello(obj_t *obj) {
     method(obj);
 }
 
+static inline void
+Obj_Hello_FIXED(obj_t *obj) {
+    class_t *klass = obj->klass;
+    method_t method = *(method_t*)((char*)klass + Obj_Hello_FIXED_OFFSET);
+    method(obj);
+}
+
 void
 loop_with_method_ptr(obj_t *obj) {
     method_t method = Obj_Hello_PTR(obj);
@@ -36,6 +43,13 @@ void
 loop_with_wrapper(obj_t *obj) {
     for (uint64_t i = 0; i < ITERATIONS; ++i) {
         Obj_Hello(obj);
+    }
+}
+
+void
+loop_with_fixed_offset_wrapper(obj_t *obj) {
+    for (uint64_t i = 0; i < ITERATIONS; ++i) {
+        Obj_Hello_FIXED(obj);
     }
 }
 
@@ -135,6 +149,7 @@ main(int argc, char **argv) {
 
     bench(loop_with_method_ptr, "method ptr loop");
     bench(loop_with_wrapper, "wrapper loop");
+    bench(loop_with_fixed_offset_wrapper, "fixed offset wrapper loop");
 #ifdef HAS_ALIAS
     bench(loop_with_thunk, "thunk loop");
     bench(loop_with_thunk_ptr, "thunk ptr loop");
