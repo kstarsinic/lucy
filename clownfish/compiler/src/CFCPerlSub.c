@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+#include "charmony.h"
+
 #include <string.h>
 #include <stdio.h>
+
 #define CFC_NEED_BASE_STRUCT_DEF
 #define CFC_NEED_PERLSUB_STRUCT_DEF
 #include "CFCPerlSub.h"
@@ -118,10 +121,26 @@ struct allot_macro_map {
 struct allot_macro_map prim_type_to_allot_macro[] = {
     { "double",     "ALLOT_F64"    },
     { "float",      "ALLOT_F32"    },
-    { "int",        "ALLOT_INT"    },
-    { "short",      "ALLOT_SHORT"  },
-    { "long",       "ALLOT_LONG"   },
-    { "size_t",     "ALLOT_SIZE_T" },
+#if (CHY_SIZEOF_INT == 4)
+    { "int",        "ALLOT_I32"    },
+#else // sizeof(int) == 8
+    { "int",        "ALLOT_I64"    },
+#endif
+#if (CHY_SIZEOF_SHORT == 2)
+    { "short",      "ALLOT_I16"    },
+#else
+  #error "Can't build unless sizeof(short) == 2"
+#endif
+#if (CHY_SIZEOF_LONG == 4)
+    { "long",       "ALLOT_I32"    },
+#else // sizeof(long) == 8
+    { "long",       "ALLOT_I64"    },
+#endif
+#if (CHY_SIZEOF_SIZE_T == 4)
+    { "size_t",     "ALLOT_U32"    },
+#else // sizeof(size_t) == 8
+    { "size_t",     "ALLOT_U64"    },
+#endif
     { "uint64_t",   "ALLOT_U64"    },
     { "uint32_t",   "ALLOT_U32"    },
     { "uint16_t",   "ALLOT_U16"    },
