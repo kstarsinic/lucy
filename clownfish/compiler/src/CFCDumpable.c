@@ -269,7 +269,7 @@ S_add_load_method(CFCClass *klass) {
             "    cfish_VTable *vtable = cfish_VTable_singleton(class_name, NULL);\n"
             "    %s *loaded = (%s*)Cfish_VTable_Make_Obj(vtable);\n"
             "    %sIVARS *ivars = %s%s_IVARS(loaded);\n"
-            "    CHY_UNUSED_VAR(self);\n";
+            "    CFISH_UNUSED_VAR(self);\n";
         char *autocode
             = CFCUtil_sprintf(pattern, full_func_sym, full_struct, full_struct,
                               full_struct,
