@@ -15,7 +15,6 @@
  */
 
 #define C_LUCY_DOC
-#include "charmony.h"
 #include "XSBind.h"
 #include "Lucy/Document/Doc.h"
 #include "Lucy/Store/InStream.h"

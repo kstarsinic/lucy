@@ -20,6 +20,7 @@
 #ifndef H_CFISH_XSBIND
 #define H_CFISH_XSBIND 1
 
+#include "charmony.h"
 #include "Clownfish/Obj.h"
 #include "Clownfish/ByteBuf.h"
 #include "Clownfish/CharBuf.h"
@@ -165,6 +166,11 @@ cfish_XSBind_enable_overload(void *pobj);
  *     ALLOT_U32(ptr, key, keylen, required)
  *     ALLOT_U64(ptr, key, keylen, required)
  *     ALLOT_BOOL(ptr, key, keylen, required)
+ *     ALLOT_CHAR(ptr, key, keylen, required)
+ *     ALLOT_SHORT(ptr, key, keylen, required)
+ *     ALLOT_INT(ptr, key, keylen, required)
+ *     ALLOT_LONG(ptr, key, keylen, required)
+ *     ALLOT_SIZE_T(ptr, key, keylen, required)
  *     ALLOT_F32(ptr, key, keylen, required)
  *     ALLOT_F64(ptr, key, keylen, required)
  *
@@ -220,6 +226,36 @@ cfish_XSBind_allot_params(SV** stack, int32_t start,
 #define XSBIND_WANT_OBJ      0xC
 #define XSBIND_WANT_SV       0xD
 
+#if (CHY_SIZEOF_CHAR == 1)
+  #define XSBIND_WANT_CHAR XSBIND_WANT_I8
+#else
+  #error "Can't build unless sizeof(char) == 1"
+#endif
+
+#if (CHY_SIZEOF_SHORT == 2)
+  #define XSBIND_WANT_SHORT XSBIND_WANT_I16
+#else
+  #error "Can't build unless sizeof(short) == 2"
+#endif
+
+#if (CHY_SIZEOF_INT == 4)
+  #define XSBIND_WANT_INT XSBIND_WANT_I32
+#else // sizeof(int) == 8
+  #define XSBIND_WANT_INT XSBIND_WANT_I64
+#endif
+
+#if (CHY_SIZEOF_LONG == 4)
+  #define XSBIND_WANT_LONG XSBIND_WANT_I32
+#else // sizeof(long) == 8
+  #define XSBIND_WANT_LONG XSBIND_WANT_I64
+#endif
+
+#if (CHY_SIZEOF_SIZE_T == 4)
+  #define XSBIND_WANT_SIZE_T XSBIND_WANT_U32
+#else // sizeof(long) == 8
+  #define XSBIND_WANT_SIZE_T XSBIND_WANT_U64
+#endif
+
 #define XSBIND_ALLOT_I8(ptr, key, keylen, required) \
     ptr, key, keylen, required, XSBIND_WANT_I8, NULL, NULL
 #define XSBIND_ALLOT_I16(ptr, key, keylen, required) \
@@ -238,6 +274,16 @@ cfish_XSBind_allot_params(SV** stack, int32_t start,
     ptr, key, keylen, required, XSBIND_WANT_U64, NULL, NULL
 #define XSBIND_ALLOT_BOOL(ptr, key, keylen, required) \
     ptr, key, keylen, required, XSBIND_WANT_BOOL, NULL, NULL
+#define XSBIND_ALLOT_CHAR(ptr, key, keylen, required) \
+    ptr, key, keylen, required, XSBIND_WANT_CHAR, NULL, NULL
+#define XSBIND_ALLOT_SHORT(ptr, key, keylen, required) \
+    ptr, key, keylen, required, XSBIND_WANT_SHORT, NULL, NULL
+#define XSBIND_ALLOT_INT(ptr, key, keylen, required) \
+    ptr, key, keylen, required, XSBIND_WANT_INT, NULL, NULL
+#define XSBIND_ALLOT_LONG(ptr, key, keylen, required) \
+    ptr, key, keylen, required, XSBIND_WANT_LONG, NULL, NULL
+#define XSBIND_ALLOT_SIZE_T(ptr, key, keylen, required) \
+    ptr, key, keylen, required, XSBIND_WANT_SIZE_T, NULL, NULL
 #define XSBIND_ALLOT_F32(ptr, key, keylen, required) \
     ptr, key, keylen, required, XSBIND_WANT_F32, NULL, NULL
 #define XSBIND_ALLOT_F64(ptr, key, keylen, required) \
@@ -275,6 +321,11 @@ cfish_XSBind_allot_params(SV** stack, int32_t start,
 #define ALLOT_U32                      XSBIND_ALLOT_U32
 #define ALLOT_U64                      XSBIND_ALLOT_U64
 #define ALLOT_BOOL                     XSBIND_ALLOT_BOOL
+#define ALLOT_CHAR                     XSBIND_ALLOT_CHAR
+#define ALLOT_SHORT                    XSBIND_ALLOT_SHORT
+#define ALLOT_INT                      XSBIND_ALLOT_INT
+#define ALLOT_LONG                     XSBIND_ALLOT_LONG
+#define ALLOT_SIZE_T                   XSBIND_ALLOT_SIZE_T
 #define ALLOT_F32                      XSBIND_ALLOT_F32
 #define ALLOT_F64                      XSBIND_ALLOT_F64
 #define ALLOT_OBJ                      XSBIND_ALLOT_OBJ
