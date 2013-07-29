@@ -2286,7 +2286,8 @@ PPCODE:
     CFCPerlClass_append_xs(self, xs);
 
 SV*
-method_bindings(klass)
+method_bindings(unused, klass)
+    SV *unused;
     CFCClass *klass;
 CODE:
     CFCPerlMethod **bound = CFCPerlClass_method_bindings(klass);
