@@ -35,11 +35,6 @@ TestVArray_new() {
     return (TestVArray*)VTable_Make_Obj(TESTVARRAY);
 }
 
-static CharBuf*
-S_new_cb(const char *text) {
-    return CB_new_from_utf8(text, strlen(text));
-}
-
 static void
 test_Equals(TestBatchRunner *runner) {
     VArray *array = VA_new(0);
