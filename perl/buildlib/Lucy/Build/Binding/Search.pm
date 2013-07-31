@@ -708,6 +708,10 @@ END_CONSTRUCTOR_CODE_SAMPLE
         alias  => '_make_compiler',
         method => 'Make_Compiler',
     );
+    $binding->bind_method(
+        alias  => '_load',
+        method => 'Load',
+    );
     $binding->set_pod_spec($pod_spec);
 
     Clownfish::CFC::Binding::Perl::Class->register($binding);
