@@ -38,7 +38,7 @@ StupidHashCharBuf_new(const char *text) {
 }
 
 int32_t
-StupidHashCharBuf_hash_sum(StupidHashCharBuf *self) {
+StupidHashCharBuf_Hash_Sum_IMP(StupidHashCharBuf *self) {
     UNUSED_VAR(self);
     return 1;
 }
@@ -75,7 +75,7 @@ test_all(TestBatchRunner *runner) {
 }
 
 void
-TestLFReg_run(TestLockFreeRegistry *self, TestBatchRunner *runner) {
+TestLFReg_Run_IMP(TestLockFreeRegistry *self, TestBatchRunner *runner) {
     TestBatchRunner_Plan(runner, (TestBatch*)self, 6);
     test_all(runner);
 }
