@@ -236,6 +236,15 @@ S_write_boot_c(CFCPerl *self) {
             const char **aliases
                 = CFCPerlClass_get_class_aliases(class_binding);
             for (size_t j = 0; aliases[j] != NULL; j++) {
+                if (!strlen(alias_adds)) {
+                    // There's at least one alias, so include the buffer.
+                    alias_adds
+                        = CFCUtil_cat(alias_adds,
+                                      "    cfish_ZombieCharBuf *alias "
+                                      "= CFISH_ZCB_WRAP_STR(\"\", 0);\n",
+                                      NULL);
+                }
+
                 const char *alias = aliases[j];
                 size_t alias_len  = strlen(alias);
                 const char pattern[] =
@@ -284,7 +293,6 @@ S_write_boot_c(CFCPerl *self) {
         "%s() {\n"
         "%s"
         "\n"
-        "    cfish_ZombieCharBuf *alias = CFISH_ZCB_WRAP_STR(\"\", 0);\n"
         "%s"
         "\n"
         "    AV *isa;\n"
