@@ -26,7 +26,7 @@
 #include "Clownfish/VArray.h"
 
 Obj*
-VTable_make_obj(VTable *self) {
+VTable_Make_Obj_IMP(VTable *self) {
     Obj *obj = (Obj*)Memory_wrapped_calloc(self->obj_alloc_size, 1);
     obj->vtable = self;
     obj->refcount = 1;
@@ -34,7 +34,7 @@ VTable_make_obj(VTable *self) {
 }
 
 Obj*
-VTable_init_obj(VTable *self, void *allocation) {
+VTable_Init_Obj_IMP(VTable *self, void *allocation) {
     Obj *obj = (Obj*)allocation;
     obj->vtable = self;
     obj->refcount = 1;
@@ -42,7 +42,7 @@ VTable_init_obj(VTable *self, void *allocation) {
 }
 
 Obj*
-VTable_foster_obj(VTable *self, void *host_obj) {
+VTable_Foster_Obj_IMP(VTable *self, void *host_obj) {
     UNUSED_VAR(self);
     UNUSED_VAR(host_obj);
     THROW(ERR, "TODO");
@@ -69,7 +69,7 @@ VTable_find_parent_class(const CharBuf *class_name) {
 }
 
 void*
-VTable_to_host(VTable *self) {
+VTable_To_Host_IMP(VTable *self) {
     UNUSED_VAR(self);
     THROW(ERR, "TODO");
     UNREACHABLE_RETURN(void*);
