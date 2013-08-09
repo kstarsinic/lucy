@@ -173,7 +173,7 @@ Hash_Make_Key_IMP(Hash *self, Obj *key, int32_t hash_sum) {
 Obj*
 Hash_Fetch_Str_IMP(Hash *self, const char *key, size_t key_len) {
     ZombieCharBuf *key_buf = ZCB_WRAP_STR(key, key_len);
-    return Hash_fetch(self, (Obj*)key_buf);
+    return Hash_Fetch_IMP(self, (Obj*)key_buf);
 }
 
 static INLINE HashEntry*
@@ -225,7 +225,7 @@ Hash_Delete_IMP(Hash *self, const Obj *key) {
 Obj*
 Hash_Delete_Str_IMP(Hash *self, const char *key, size_t key_len) {
     ZombieCharBuf *key_buf = ZCB_WRAP_STR(key, key_len);
-    return Hash_delete(self, (Obj*)key_buf);
+    return Hash_Delete_IMP(self, (Obj*)key_buf);
 }
 
 uint32_t
@@ -275,7 +275,7 @@ Hash_Keys_IMP(Hash *self) {
     VArray *keys = VA_new(self->size);
     Hash_Iterate(self);
     while (Hash_Next(self, &key, &val)) {
-        VA_push(keys, INCREF(key));
+        VA_Push(keys, INCREF(key));
     }
     return keys;
 }
@@ -286,7 +286,7 @@ Hash_Values_IMP(Hash *self) {
     Obj *val;
     VArray *values = VA_new(self->size);
     Hash_Iterate(self);
-    while (Hash_Next(self, &key, &val)) { VA_push(values, INCREF(val)); }
+    while (Hash_Next(self, &key, &val)) { VA_Push(values, INCREF(val)); }
     return values;
 }
 
