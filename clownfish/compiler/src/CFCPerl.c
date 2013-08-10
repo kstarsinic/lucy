@@ -208,6 +208,7 @@ S_write_boot_c(CFCPerl *self) {
     char *bootstrap_code  = CFCUtil_strdup("");
     char *alias_adds      = CFCUtil_strdup("");
     char *isa_pushes      = CFCUtil_strdup("");
+    int   has_aliases     = 0;
 
     for (size_t i = 0; parcels[i]; ++i) {
         if (!CFCParcel_included(parcels[i])) {
@@ -236,13 +237,14 @@ S_write_boot_c(CFCPerl *self) {
             const char **aliases
                 = CFCPerlClass_get_class_aliases(class_binding);
             for (size_t j = 0; aliases[j] != NULL; j++) {
-                if (!strlen(alias_adds)) {
+                if (!has_aliases) {
                     // There's at least one alias, so include the buffer.
                     alias_adds
                         = CFCUtil_cat(alias_adds,
                                       "    cfish_ZombieCharBuf *alias "
                                       "= CFISH_ZCB_WRAP_STR(\"\", 0);\n",
                                       NULL);
+                    has_aliases = 1;
                 }
 
                 const char *alias = aliases[j];
