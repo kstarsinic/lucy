@@ -29,6 +29,7 @@
 #include "Clownfish/Test/TestLockFreeRegistry.h"
 #include "Clownfish/Test/TestNum.h"
 #include "Clownfish/Test/TestObj.h"
+#include "Clownfish/Test/TestString.h"
 #include "Clownfish/Test/TestVArray.h"
 #include "Clownfish/Test/Util/TestAtomic.h"
 #include "Clownfish/Test/Util/TestMemory.h"
@@ -39,6 +40,7 @@ TestSuite*
 Test_create_test_suite() {
     TestSuite *suite = TestSuite_new();
 
+    TestSuite_Add_Batch(suite, (TestBatch*)TestStr_new());
     TestSuite_Add_Batch(suite, (TestBatch*)TestVArray_new());
     TestSuite_Add_Batch(suite, (TestBatch*)TestHash_new());
     TestSuite_Add_Batch(suite, (TestBatch*)TestObj_new());
