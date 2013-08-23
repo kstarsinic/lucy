@@ -129,7 +129,7 @@ CB_newf(const char *pattern, ...) {
 
 void
 CB_Destroy_IMP(CharBuf *self) {
-    FREEMEM(self->ptr);
+    // FREEMEM(self->ptr);
     SUPER_DESTROY(self, CHARBUF);
 }
 
@@ -806,7 +806,7 @@ void
 ViewCB_Destroy_IMP(ViewCharBuf *self) {
     // Note that we do not free self->ptr, and that we invoke the
     // SUPER_DESTROY with CHARBUF instead of VIEWCHARBUF.
-    SUPER_DESTROY(self, CHARBUF);
+    SUPER_DESTROY(self, STRING); // Temporary hack to STRING instead of CHARBUF
 }
 
 void

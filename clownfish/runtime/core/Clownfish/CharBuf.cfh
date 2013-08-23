@@ -20,12 +20,7 @@ parcel Clownfish;
  * Growable buffer holding Unicode characters.
  */
 
-class Clownfish::CharBuf cnick CB
-    inherits Clownfish::Obj {
-
-    char    *ptr;
-    size_t   size;
-    size_t   cap;  /* allocated bytes, including terminating null */
+class Clownfish::CharBuf cnick CB inherits Clownfish::String {
 
     inert incremented CharBuf*
     new(size_t size);
