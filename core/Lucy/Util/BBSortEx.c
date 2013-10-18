@@ -187,6 +187,17 @@ BBSortEx_Peek_Cache_IMP(BBSortEx *self) {
     return retval;
 }
 
+Obj*
+BBSortEx_Peek_Last_IMP(BBSortEx *self) {
+    BBSortExIVARS *const ivars = BBSortEx_IVARS(self);
+    uint32_t   count = ivars->cache_max - ivars->cache_tick;
+    Obj      **cache = (Obj**)ivars->cache;
+
+    if (count == 0) { return NULL; }
+
+    return INCREF(cache[count-1]);
+}
+
 uint32_t
 BBSortEx_Get_Num_Runs_IMP(BBSortEx *self) {
     BBSortExIVARS *const ivars = BBSortEx_IVARS(self);
